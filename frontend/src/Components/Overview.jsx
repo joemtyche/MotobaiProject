@@ -11,7 +11,7 @@ export default function Overview({ overviewArr }) {
             <div key={index}>
               <h2 className={`text-xl text-white`}>{title}</h2>
               <h1
-                className={`text-3xl mb-6 text-white font-semibold ${className}`}
+                className={`text-shadow text-3xl mb-6 text-white font-semibold drop-shadow-lg ${className}`}
               >
                 {quantity < 10 ? "0" + quantity : quantity}
               </h1>

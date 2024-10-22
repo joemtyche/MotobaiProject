@@ -52,7 +52,7 @@ function Navigation() {
           </div>
           <p>Accounts</p>
         </DynamicCustomLink>
-        <div className="absolute bottom-0">
+        <div>
           {accountDropDown && (
             <div className={`flex flex-col item-center`}>
               <NavDropDown navigationArr={accountNavigationArr} />
@@ -90,7 +90,7 @@ function Navigation() {
           </div>
           <p>Inventory</p>
         </DynamicCustomLink>
-        <div className=" z-10">
+        <div>
           {inventoryDropDown && (
             <div className={`flex flex-col item-center `}>
               <NavDropDown navigationArr={inventoryNavigationArr} />

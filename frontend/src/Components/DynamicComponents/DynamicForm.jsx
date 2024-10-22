@@ -88,7 +88,7 @@ export default function DynamicForm({
                       index
                     ) => (
                       <div
-                        className={`flex flex-col justify-between`}
+                        className={`flex flex-col justify-between `}
                         key={index}
                       >
                         <input

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   UserPlusIcon,
   ArrowDownTrayIcon,
@@ -26,17 +26,50 @@ const Suppliers = () => {
     if (method === "edit") {
       setRowToEdit(null);
     }
+
+    {
+      errorWindow ? toggleErrorWindow() : "";
+    }
   };
 
-  const [errorWindow, setErrorWindow] = useState(false);
+  // ERROR WINDOW TOGGLE
 
+  const [errorWindow, setErrorWindow] = useState(false);
   const toggleErrorWindow = () => {
     setErrorWindow((e) => (e = !e));
   };
 
+  useEffect(() => {
+    if (errorWindow) {
+      const timer = setTimeout(() => {
+        setErrorWindow(false);
+      }, 5000); // Closes the error window after 5 seconds
+
+      return () => clearTimeout(timer); // Cleanup if component unmounts
+    }
+  }, [errorWindow]);
+
+  // ERROR TEXT
   const [errors, setErrors] = useState("");
   var errorFields = [];
 
+  // SUCCESS WINDOW TOGGLE
+  const [successWindow, setSuccessWindow] = useState(false);
+  const toggleSuccessWindow = () => {
+    setSuccessWindow((e) => (e = !e));
+  };
+
+  useEffect(() => {
+    if (successWindow) {
+      const timer = setTimeout(() => {
+        setSuccessWindow(false);
+      }, 2000); // Closes the error window after 2.5 seconds
+
+      return () => clearTimeout(timer); // Cleanup if component unmounts
+    }
+  }, [successWindow]);
+
+  const [successMethod, setSuccessMethod] = useState("");
   //PROPS FOR <INPUT>
   const formArr = [
     {
@@ -47,6 +80,7 @@ const Suppliers = () => {
     {
       label: "Phone Number",
       name: "phone_number",
+      type: "number",
     },
     {
       label: "Description",
@@ -72,7 +106,7 @@ const Suppliers = () => {
     },
   ];
 
-  const { data: supplier } = useFetchData("supplier");
+  const { data: supplier, triggerRefresh } = useFetchData("supplier");
   const { deleteData, error } = useDeleteData(); // add error field here later
 
   const deleteHandler = () => {
@@ -88,10 +122,10 @@ const Suppliers = () => {
 
   const onSubmitHandler = async (form, callback) => {
     setLoading(true);
+
     if (method === "create") {
-      console.log("create method");
-      ////////////////////////////////////////// CODE FOR SAVING DATA
       if (rowToEdit === null) {
+        ////////////////////////////////////////// CODE FOR SAVING DATA
         try {
           const res = await api.post(
             "http://127.0.0.1:8000/api/supplier/create/",
@@ -102,16 +136,17 @@ const Suppliers = () => {
             }
           );
 
-          window.location.reload();
           {
             errorWindow ? toggleErrorWindow() : "";
           }
-          callback();
+          triggerRefresh();
           toggleModal();
-        } catch (error) {
+          callback();
+          setSuccessMethod("Added");
+          toggleSuccessWindow();
           setRowToEdit(null);
           errorFields = [];
-          toggleModal();
+        } catch (error) {
           for (const [key, value] of Object.entries(form)) {
             if (!value) {
               errorFields.push(key);
@@ -121,7 +156,6 @@ const Suppliers = () => {
           {
             !errorWindow ? toggleErrorWindow() : "";
           }
-          callback();
         } finally {
           setLoading(false);
         }
@@ -138,17 +172,22 @@ const Suppliers = () => {
             description: form.description,
           }
         );
-        window.location.reload();
         {
           errorWindow ? toggleErrorWindow() : "";
         }
-      } catch (error) {
+        triggerRefresh();
+        toggleModal();
+        callback();
+        setSuccessMethod("Edited");
+        toggleSuccessWindow();
         setRowToEdit(null);
         errorFields = [];
-        toggleModal();
+      } catch (error) {
         for (const [key, value] of Object.entries(form)) {
           if (!value) {
-            errorFields.push(key);
+            if (key !== "is_deleted") {
+              errorFields.push(key);
+            }
           }
         }
         setErrors((e) => errorFields.join(", "));
@@ -158,10 +197,7 @@ const Suppliers = () => {
         callback();
       } finally {
         setLoading(false);
-        setRowIdEdit(null);
       }
-
-      callback();
     } else if (method === "delete") {
       // rename rowIdEdit to rowIdSelected or smth similar
       try {
@@ -217,6 +253,26 @@ const Suppliers = () => {
             </div>
 
             <DynamicModal modal={modal} toggleModal={toggleModal}>
+              <div className="absolute z-20 top-20  left-1/2 transform -translate-x-1/2  ">
+                {errorWindow && (
+                  <div
+                    className={`rounded mt-8 p-4 text-lg font-bold text-red-600   bg-red-200 flex justify-between transition-all w-[70vw] shadow-2xl`}
+                  >
+                    <h1>
+                      <span className="text-red-700">
+                        Please fill in properly the:{" "}
+                      </span>
+                      {errors}
+                    </h1>
+                    <button
+                      onClick={toggleErrorWindow}
+                      className={`p-2 hover:text-red-700 text-xl`}
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
+              </div>
               <DynamicForm
                 error={errorFields}
                 btnTitle={btnTitle}
@@ -231,19 +287,19 @@ const Suppliers = () => {
                 icon={<ArrowDownTrayIcon className="size-5" />}
               />
             </DynamicModal>
-
-            <div className="absolute top-50 z-10 shadow-2xl">
-              {errorWindow && (
+            <div className="absolute z-20 top-20  left-1/2 transform -translate-x-1/2">
+              {successWindow && (
                 <div
-                  className={`rounded mt-8 p-4 text-lg font-bold text-red-600  shadow-shadowTable bg-red-200 flex justify-between transition-all w-[70vw]`}
+                  className={`rounded p-4 text-lg font-bold text-green-600 bg-green-200 flex justify-between  transition-all w-[30vw] shadow-2xl`}
                 >
                   <h1>
-                    <span className="text-red-700">Please fill in the: </span>
-                    {errors}
+                    <span className="text-green-700">
+                      Successfully {successMethod}!
+                    </span>
                   </h1>
                   <button
-                    onClick={toggleErrorWindow}
-                    className={`p-2 hover:text-red-700 text-xl`}
+                    onClick={toggleSuccessWindow}
+                    className={`p-2 hover:text-green-700 text-xl`}
                   >
                     Close
                   </button>
