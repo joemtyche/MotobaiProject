@@ -70,6 +70,13 @@ function Form({ route, method }) {
               className={`bg-gray-100 py-10 px-8 h-[40vh] rounded-b-lg flex flex-col gap-4`}
             >
               <h1 className="font-bold text-2xl">{name}</h1>
+              {method === "login" && (
+                <div className="bg-yellow-50 border border-yellow-300 rounded p-3 text-sm text-yellow-800 space-y-1">
+                  <p>⚠️ This site is still a work in progress and may undergo changes.</p>
+                  <p>📝 To get started, please create an account by registering first.</p>
+                  <p>🔄 Note that displayed data may not be regularly refreshed or up to date.</p>
+                </div>
+              )}
               <input
                 className="text-lg p-2 min-w-[450px]"
                 type="text"

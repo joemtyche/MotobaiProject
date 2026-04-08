@@ -86,7 +86,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/" element={<Navigate to="/accounts" />} />
+          <Route path="/" element={<Navigate to="/login" />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
