@@ -170,6 +170,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
     "https://motobai.tyche01.fun",
+    "https://motobai.joemidpan.com",
     "http://localhost:5173",  # keep for local dev
 ]
 
