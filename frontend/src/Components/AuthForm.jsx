@@ -13,11 +13,20 @@ function Form({ route, method }) {
   const navigate = useNavigate();
 
   const name = method === "login" ? "Login" : "Register";
+  const serverOffline = true; // flip this when Railway is back
 
   const handleSubmit = async (e) => {
     setLoading(true);
     e.preventDefault();
-
+    if (serverOffline) {
+      Swal.fire({
+        title: "Server Offline",
+        text: "The backend server is currently unavailable. Please try again later.",
+        icon: "error",
+      });
+      setLoading(false);
+      return;
+    }
     try {
       const res = await api.post(route, { username, password });
       if (method === "login") {
@@ -53,70 +62,55 @@ function Form({ route, method }) {
 
   return (
     <section>
-      <div className="fixed w-screen h-screen left-0 top-0 z-10 backdrop-blur-sm bg-black bg-opacity-60 ">
-        <div
-          className={`absolute inset-0 w-fit h-fit m-auto bg-mainColor rounded-lg z-10
-            `}
-        >
-          <div className={`bg-mainColor w-1/2 rounded-l-lg`}>
-            <img
-              className="max-w-16 rounded-l-xl"
-              src={Logo}
-              alt="Motobai-Logo"
-            />
+      <div className="fixed w-screen h-screen left-0 top-0 z-10 backdrop-blur-sm bg-black bg-opacity-60">
+        <div className="absolute inset-0 w-fit h-fit m-auto bg-mainColor rounded-lg z-10">
+          <div className="bg-mainColor px-6 py-4 rounded-t-lg flex items-center gap-3">
+            <img className="max-w-10 rounded-xl" src={Logo} alt="Motobai-Logo" />
+            <span className="text-white text-lg font-medium">Motobai</span>
           </div>
-          <form onSubmit={handleSubmit} className="min-w-[20vw]">
-            <div
-              className={`bg-gray-100 py-10 px-8 h-[40vh] rounded-b-lg flex flex-col gap-4`}
-            >
+          <form onSubmit={handleSubmit}>
+            <div className="bg-gray-100 py-8 px-8 rounded-b-lg flex flex-col gap-4 w-[90vw] max-w-md">
               <h1 className="font-bold text-2xl">{name}</h1>
-              {method === "login" && (
-                <div className="bg-yellow-50 border border-yellow-300 rounded p-3 text-sm text-yellow-800 space-y-1">
-                  <p>⚠️ This site is still a work in progress and may undergo changes.</p>
-                  <p>📝 To get started, please create an account by registering first.</p>
-                  <p>🔄 Note that displayed data may not be regularly refreshed or up to date.</p>
-                </div>
-              )}
+              <div className="bg-yellow-50 border border-yellow-400 rounded p-3 text-sm text-yellow-800 space-y-1">
+                <p>⚠️ Server is currently offline. Login and registration are unavailable.</p>
+                <p>📝 This site is still a work in progress and may undergo changes.</p>
+                <p>🔄 Displayed data may not be regularly refreshed or up to date.</p>
+              </div>
               <input
-                className="text-lg p-2 min-w-[450px]"
+                className="text-lg p-2 w-full opacity-50 cursor-not-allowed"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Username"
+                disabled={serverOffline}
               />
               <input
-                className="text-lg p-2 min-w-[450px]"
+                className="text-lg p-2 w-full opacity-50 cursor-not-allowed"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
+                disabled={serverOffline}
               />
-              <div className="flex justify-center mt-12">
-                <button
-                  className={`shadow-md bg-white border-2 border-red-700 rounded px-6 py-2 hover:bg-red-700 hover:text-white transition-all duration-100 items-center w-fit text-xl font-semibold`}
-                  type="submit"
-                >
-                  {name}
-                </button>
-              </div>
-              <div className="flex justify-center mt-4">
+              <button
+                className="shadow-md bg-white border-2 border-red-700 rounded px-6 py-2 hover:bg-red-700 hover:text-white transition-all duration-100 text-xl font-semibold w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                type="submit"
+                disabled={serverOffline || loading}
+              >
+                {name}
+              </button>
+              <div className="flex justify-center">
                 {method === "login" ? (
                   <p className="text-sm">
                     Don't have an account?{" "}
-                    <span
-                      className="text-red-700 cursor-pointer hover:underline"
-                      onClick={() => navigate("/register")}
-                    >
+                    <span className="text-red-700 cursor-pointer hover:underline" onClick={() => navigate("/register")}>
                       Register
                     </span>
                   </p>
                 ) : (
                   <p className="text-sm">
                     Already have an account?{" "}
-                    <span
-                      className="text-red-700 cursor-pointer hover:underline"
-                      onClick={() => navigate("/login")}
-                    >
+                    <span className="text-red-700 cursor-pointer hover:underline" onClick={() => navigate("/login")}>
                       Login
                     </span>
                   </p>
