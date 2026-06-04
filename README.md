@@ -6,6 +6,13 @@ This internal-use application is built to support and streamline Motobai's day-t
 
 ---
 
+## 📚 Documentation & Demo
+
+- **Project documentation:** [Motobai Google Docs documentation](https://docs.google.com/document/d/1w_IOIviPqO36PsJ7oSh1fYXXhXqpMLH2piADggkGSXI/edit?usp=sharing)
+- **Demo video:** [Motobai demo on YouTube](https://youtu.be/JgODj4c1fUU)
+
+---
+
 ## 👨‍💻 Team
 
 | Name | Role |
