@@ -4,7 +4,7 @@ import { REFRESH_TOKEN } from "./constants";
 
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL
+  baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
 });
 
 api.interceptors.request.use(
@@ -26,13 +26,13 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response.status === 401 && !originalRequest._retry) {
+    if (originalRequest && error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       const refreshToken = localStorage.getItem(REFRESH_TOKEN);
       if (refreshToken) {
         try {
-          const response = await api.post('/token/refresh/', { refresh: refreshToken });
+          const response = await api.post('/api/token/refresh/', { refresh: refreshToken });
           const newAccessToken = response.data.access;
 
           localStorage.setItem(ACCESS_TOKEN, newAccessToken);

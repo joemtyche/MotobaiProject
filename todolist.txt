@@ -1,58 +1,44 @@
-NOTES:
-- packaged/set items
-- make readme.md an actual good readme
-- peso sign for all prices and comma maybe
-- description box too small
-- dropdown for type
-- Revert/Delete row in initial Stock-In
-- fix create order sorting of price
-- fix sorting button to be the whole header
-- sorting acting weird when editing
-- in stock in and in create order, list how much stock is in the selected product
-- edit order
-- updated_by fields per state, select employee
-- status not sorting properly in order
-- fix status sorting in inventory
-- sorting customer name
-- no select multiple of same product in order
-- reference number input validation
-- employee and supplier stockin
-- show current stock in order
-- show order history status
-- return order function
-- payment fields
-- add more table columns and fields for inventory(liters,ml,etc., desc)
-- stocklogs needs more information
-- stockout
-- packaging
-- code cleanup
-- register and login button navigation when logging in/ registering
-- on return: hindi naka list kung ano na update, hindi pa mag refresh after complete update, and di rin naga reflect na ung new quantity during the return process
-- payment reference number on detailsorder modal, cannot type consecutively
-- no reference number for walkin order
+BRANCH / WORKFLOW
+- Create a dedicated branch before demo/refactor work:
+  git switch -c demo-static
+- Keep backend/local setup fixes on the current branch unless intentionally moving them.
+- Use the demo branch for a backendless deployment target such as motobai.joemidpan.com.
 
-INPUT VALIDATION ISSUES:
-- reference number input validation prompt backend
-- input validation for deductions
-- stockin supplier and employee and reference number check if blank
-- order reference number check if blank
-- stockin 0 input validation
+BIG FINDINGS / PRIORITY FIXES
+- Backend security is too open for anything public:
+  - SECRET_KEY is hardcoded.
+  - DEBUG is True.
+  - ALLOWED_HOSTS is ["*"].
+  - CORS_ALLOW_ALL_ORIGINS is True.
+  - Most API views override auth with AllowAny.
+- Several frontend calls still hardcode http://127.0.0.1:8000 instead of using the shared api wrapper / VITE_API_URL.
+- DynamicTable calls editRow(item.id) even when editRow is missing or null, which can crash list screens.
+- Order stock logic is risky:
+  - OrderTracking can deduct stock on save while status is already validated.
+  - Some serializer updates call order.order_tracking.save(), which can trigger extra stock changes.
+- OrderDetails.save() appears broken:
+  - It looks up OrderTracking by OrderDetails primary key.
+  - It references self.status even though OrderDetails has no status field.
+- Walk-in order deductions are likely ignored:
+  - Frontend sends deduction.
+  - Backend reads deductions.
+- There are no meaningful backend tests yet.
+- Admin models are not registered, so Django admin is not useful for inspecting app data.
+- Demo/backendless mode needs a deliberate data adapter:
+  - Add VITE_DEMO_MODE.
+  - Add static JSON seed data.
+  - Add mock API/localStorage behavior for frontend-only deployment.
 
-- usecase diagram
-- usecase tables
-- finalize erd
-- finalize capstones
+DATA / LOCAL SETUP
+- Use defaultdata/motobai_seed_local.sql instead of the original raw dump.
+- Avoid importing django_migrations, django_content_type, and auth_permission from old dumps.
+- Keep backend/requirements-local.txt for local MySQL setup.
+- Avoid Python 3.14 for backend local setup; use Python 3.11 or 3.12.
 
-Added stuff:
-- AAAAAAAAAAA
-- 
-
-Todo Pages:
-- Dashboard/Landing Page
-
-MY QUESTIONS:
-- for backend when checking, what are the common questions or tasks that the panelists do to check the backend? 
-Current Issues:
-- when an order is created, so does invoice, tracking; the way it is set up is so that orderid = 1, then invoiceid, trackingid = 1; even though invoice and tacking cannot be made without an order, 
-if orderid != trackingi != invoiceid is not the same then most functions will not work
-- same for product -> inventory
+RECENTLY ADDRESSED
+- Re-enabled login/register for local frontend use.
+- Added default frontend API URL fallback to http://127.0.0.1:8000.
+- Fixed frontend refresh token endpoint to /api/token/refresh/.
+- Added backend/requirements-local.txt.
+- Added safer local SQL seed file.
+- Updated README with CLI seed import instructions.

@@ -13,7 +13,7 @@ function Form({ route, method }) {
   const navigate = useNavigate();
 
   const name = method === "login" ? "Login" : "Register";
-  const serverOffline = true; // flip this when Railway is back
+  const serverOffline = import.meta.env.VITE_SERVER_OFFLINE === "true";
 
   const handleSubmit = async (e) => {
     setLoading(true);
@@ -71,26 +71,28 @@ function Form({ route, method }) {
           <form onSubmit={handleSubmit}>
             <div className="bg-gray-100 py-8 px-8 rounded-b-lg flex flex-col gap-4 w-[90vw] max-w-md">
               <h1 className="font-bold text-2xl">{name}</h1>
-              <div className="bg-yellow-50 border border-yellow-400 rounded p-3 text-sm text-yellow-800 space-y-1">
-                <p>⚠️ Server is currently offline. Login and registration are unavailable.</p>
-                <p>📝 This site is still a work in progress and may undergo changes.</p>
-                <p>🔄 Displayed data may not be regularly refreshed or up to date.</p>
-              </div>
+              {serverOffline && (
+                <div className="bg-yellow-50 border border-yellow-400 rounded p-3 text-sm text-yellow-800 space-y-1">
+                  <p>Server is currently offline. Login and registration are unavailable.</p>
+                  <p>This site is still a work in progress and may undergo changes.</p>
+                  <p>Displayed data may not be regularly refreshed or up to date.</p>
+                </div>
+              )}
               <input
-                className="text-lg p-2 w-full opacity-50 cursor-not-allowed"
+                className="text-lg p-2 w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Username"
-                disabled={serverOffline}
+                disabled={serverOffline || loading}
               />
               <input
-                className="text-lg p-2 w-full opacity-50 cursor-not-allowed"
+                className="text-lg p-2 w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
-                disabled={serverOffline}
+                disabled={serverOffline || loading}
               />
               <button
                 className="shadow-md bg-white border-2 border-red-700 rounded px-6 py-2 hover:bg-red-700 hover:text-white transition-all duration-100 text-xl font-semibold w-full disabled:opacity-50 disabled:cursor-not-allowed"
