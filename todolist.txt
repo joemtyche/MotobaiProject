@@ -1,8 +1,10 @@
 BRANCH / WORKFLOW
-- Create a dedicated branch before demo/refactor work:
-  git switch -c demo-static
-- Keep backend/local setup fixes on the current branch unless intentionally moving them.
-- Use the demo branch for a backendless deployment target such as motobai.joemidpan.com.
+- This branch is local-backend only.
+- Any frontend-only/static-site work must happen in a separate branch.
+
+PROJECT CONSTRAINTS
+- The app in this branch runs locally with React frontend + Django/MySQL backend.
+- Do not add frontend-only mode, backendless mode, or online backend deployment support here.
 
 BIG FINDINGS / PRIORITY FIXES
 - Backend security is too open for anything public:
@@ -24,21 +26,18 @@ BIG FINDINGS / PRIORITY FIXES
   - Backend reads deductions.
 - There are no meaningful backend tests yet.
 - Admin models are not registered, so Django admin is not useful for inspecting app data.
-- Demo/backendless mode needs a deliberate data adapter:
-  - Add VITE_DEMO_MODE.
-  - Add static JSON seed data.
-  - Add mock API/localStorage behavior for frontend-only deployment.
+- If a frontend-only static build is needed, make it in a separate branch.
 
 DATA / LOCAL SETUP
 - Use defaultdata/motobai_seed_local.sql instead of the original raw dump.
 - Avoid importing django_migrations, django_content_type, and auth_permission from old dumps.
-- Keep backend/requirements-local.txt for local MySQL setup.
+- Use backend/requirements.txt for local MySQL/MariaDB setup.
 - Avoid Python 3.14 for backend local setup; use Python 3.11 or 3.12.
 
 RECENTLY ADDRESSED
 - Re-enabled login/register for local frontend use.
 - Added default frontend API URL fallback to http://127.0.0.1:8000.
 - Fixed frontend refresh token endpoint to /api/token/refresh/.
-- Added backend/requirements-local.txt.
+- Made backend/requirements.txt local-only.
 - Added safer local SQL seed file.
 - Updated README with CLI seed import instructions.

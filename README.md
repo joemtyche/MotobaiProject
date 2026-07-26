@@ -6,10 +6,9 @@ This internal-use application is built to support and streamline Motobai's day-t
 
 ---
 
-## 📚 Documentation & Demo
+## 📚 Documentation
 
 - **Project documentation:** [Motobai Google Docs documentation](https://docs.google.com/document/d/1w_IOIviPqO36PsJ7oSh1fYXXhXqpMLH2piADggkGSXI/edit?usp=sharing)
-- **Demo video:** [Motobai demo on YouTube](https://youtu.be/JgODj4c1fUU)
 
 ---
 
@@ -36,21 +35,19 @@ This internal-use application is built to support and streamline Motobai's day-t
 
 ## 📋 Prerequisites
 
+This branch is for local backend use only. Run Django locally and connect it to a local MySQL-compatible database.
+
 Install these before proceeding:
 
 1. [Node.js](https://nodejs.org/)
 2. [Python 3.11 or 3.12](https://www.python.org/downloads/) for the backend local environment
-3. MySQL-compatible database server and CLI client
+3. A MySQL-compatible database setup, using one of the install methods below
 4. [VS Code](https://code.visualstudio.com/) or another editor
 
-For Fedora, MariaDB is the simplest MySQL-compatible local option:
+Database setup options:
 
-```bash
-sudo dnf install mariadb-server mariadb
-sudo systemctl enable --now mariadb
-```
-
-MySQL Workbench is optional. The setup below uses terminal commands instead.
+- Fedora/Linux: MariaDB server + CLI.
+- Windows: MySQL Installer with MySQL Server + MySQL Workbench.
 
 ---
 
@@ -64,6 +61,19 @@ cd MotobaiProject
 ```
 
 ### 2. Set up the database
+
+Choose one method for your operating system.
+
+#### Method A - Fedora/Linux CLI
+
+Install and start MariaDB:
+
+```bash
+sudo dnf install mariadb-server mariadb
+sudo systemctl enable --now mariadb
+```
+
+Open the database shell:
 
 ```bash
 sudo mariadb
@@ -107,6 +117,33 @@ Then update `backend/backend/settings.py` to use:
 'PASSWORD': 'motobai',
 ```
 
+#### Method B - Windows MySQL Installer + Workbench
+
+1. Download **MySQL Installer Community** from:
+   https://dev.mysql.com/downloads/installer/
+2. Run the installer.
+3. Choose **Developer Default**, or choose **Custom** and include:
+   - MySQL Server 8.x
+   - MySQL Workbench
+4. During MySQL Server configuration:
+   - Set the root password to `root` to match the current local Django settings.
+   - Keep the default port `3306`.
+   - Finish the installer and start MySQL Server if prompted.
+5. Open **MySQL Workbench**.
+6. Connect to the local instance, usually named `Local instance MySQL80`.
+7. Open a new SQL tab and run:
+
+```sql
+CREATE DATABASE IF NOT EXISTS motobai;
+```
+
+If you choose a root password other than `root`, update `backend/backend/settings.py`:
+
+```python
+'USER': 'root',
+'PASSWORD': 'your_password_here',
+```
+
 ### 3. Set up the frontend
 
 ```bash
@@ -128,6 +165,8 @@ VITE_API_URL="http://127.0.0.1:8000"
 
 > ⚠️ Use `127.0.0.1` and not `localhost` — the browser treats them as different origins and CORS will block requests if you use `localhost`.
 
+The frontend defaults to `http://127.0.0.1:8000` when `VITE_API_URL` is not set.
+
 ### 4. Set up the backend
 
 ```bash
@@ -142,10 +181,10 @@ python -m venv .venv
 source .venv/bin/activate
 
 python -m pip install --upgrade pip
-python -m pip install -r requirements-local.txt
+python -m pip install -r requirements.txt
 ```
 
-`requirements-local.txt` is for the local MySQL/MariaDB setup. Do not use `requirements.txt` for local setup unless you also need the Railway/PostgreSQL production dependencies.
+`requirements.txt` is for the local MySQL/MariaDB backend setup.
 
 ### 5. Confirm PyMySQL config
 
@@ -166,17 +205,27 @@ Do not run `makemigrations` during normal setup. The repo already includes migra
 
 ### 7. Load local seed data
 
-From the repository root:
+From the repository root, use the CLI import.
+
+Fedora/Linux:
 
 ```bash
 cd ..
 mariadb -u root -p motobai < defaultdata/motobai_seed_local.sql
 ```
 
-If your CLI command is named `mysql` instead:
+Windows PowerShell:
+
+```powershell
+cd ..
+cmd /c "mysql -u root -p motobai < defaultdata\motobai_seed_local.sql"
+```
+
+Windows Command Prompt:
 
 ```bash
-mysql -u root -p motobai < defaultdata/motobai_seed_local.sql
+cd ..
+mysql -u root -p motobai < defaultdata\motobai_seed_local.sql
 ```
 
 Use `defaultdata/motobai_seed_local.sql`, not the raw `motobai_dump2.sql`. The raw dump includes old Django internal table data and can conflict with current migrations.
@@ -185,6 +234,12 @@ Verify the seed:
 
 ```bash
 mariadb -u root -p motobai -e "SELECT COUNT(*) AS products FROM api_product; SELECT username FROM auth_user;"
+```
+
+On Windows, use:
+
+```powershell
+mysql -u root -p motobai -e "SELECT COUNT(*) AS products FROM api_product; SELECT username FROM auth_user;"
 ```
 
 Seed login:
@@ -202,6 +257,14 @@ password: 123
 ```bash
 cd backend
 source .venv/bin/activate
+python manage.py runserver
+```
+
+On Windows PowerShell, activate the backend environment with:
+
+```powershell
+cd backend
+.venv\Scripts\Activate.ps1
 python manage.py runserver
 ```
 
@@ -225,9 +288,6 @@ Reinstall or repair pip: https://pip.pypa.io/en/stable/installation/
 
 ### `mysqlclient` fails to install
 This is a known Windows build issue. Use PyMySQL instead (already covered in step 4–5 above). Do **not** try to install `mysqlclient` directly on Windows without MySQL C headers.
-
-### `psycopg2-binary` fails with `pg_config executable not found`
-Use `backend/requirements-local.txt` for local MySQL setup. `psycopg2-binary` is only needed for the Railway/PostgreSQL production setup and can fail on newer Python versions when pip tries to build it from source.
 
 ### Login returns CORS error
 Make sure your `.env` uses `http://127.0.0.1:8000` and **not** `http://localhost:8000`. Restart the frontend after changing `.env`.
