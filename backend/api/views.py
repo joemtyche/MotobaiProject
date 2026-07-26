@@ -3,11 +3,12 @@ from django.contrib.auth.models import User
 from rest_framework import generics, status, serializers
 from rest_framework.response import Response
 from .serializers import (
-        UserSerializer, ProductSerializer, InventorySerializer, 
+        UserSerializer, LocalTokenObtainPairSerializer, ProductSerializer, InventorySerializer, 
         AccountSerializer, OrderDetailsSerializer, OrderSerializer, 
         OrderTrackingSerializer, CustomerSerializer, EmployeeSerializer, 
         SupplierSerializer, InboundStockSerializer, PaymentSerializer, OutboundStockSerializer
     )
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import (
         Product, Inventory, Account, 
@@ -24,6 +25,10 @@ class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
+
+
+class LocalTokenObtainPairView(TokenObtainPairView):
+    serializer_class = LocalTokenObtainPairSerializer
 
 # PRODUCT
 class ProductCreate(generics.CreateAPIView):
@@ -460,4 +465,3 @@ class OutboundStockListView(generics.ListAPIView):
     queryset = OutboundStock.objects.all()
     serializer_class = OutboundStockSerializer
     permission_classes = [IsAuthenticated]
-

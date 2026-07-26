@@ -6,6 +6,49 @@ import Logo from "../assets/Logo.png";
 import "./pages.css";
 import Swal from 'sweetalert2'
 
+function formatErrorValue(value) {
+  if (Array.isArray(value)) {
+    return value.map(formatErrorValue).join(" ");
+  }
+
+  if (value && typeof value === "object") {
+    return Object.values(value).map(formatErrorValue).join(" ");
+  }
+
+  return String(value || "");
+}
+
+function getAuthErrorMessage(error, method) {
+  if (!error.response) {
+    return "Cannot connect to the local backend. Make sure Django is running.";
+  }
+
+  const data = error.response.data;
+
+  if (data?.username) {
+    return formatErrorValue(data.username);
+  }
+
+  if (data?.password) {
+    return formatErrorValue(data.password);
+  }
+
+  if (data?.detail) {
+    return formatErrorValue(data.detail);
+  }
+
+  if (data && typeof data === "object") {
+    const message = formatErrorValue(data);
+    if (message) {
+      return message;
+    }
+  }
+
+  return method === "login"
+    ? "Login failed. Check your username and password."
+    : "Registration failed. Check the username and password.";
+}
+
 function Form({ route, method }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -40,8 +83,8 @@ function Form({ route, method }) {
       }
     } catch (error) {
       Swal.fire({
-        title: "Login Error!",
-        text: `${error}`,
+        title: method === "login" ? "Login Error!" : "Registration Error!",
+        text: getAuthErrorMessage(error, method),
         icon: "error",
       });
     } finally {

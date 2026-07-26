@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
         Product, Inventory, Account, Order, OrderDetails,
         OrderTracking, Customer, Employee, Supplier, 
@@ -16,12 +17,71 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "username", "password"]
-        extra_kwargs = {"password": {"write_only": True}}
+        extra_kwargs = {
+            "username": {
+                "error_messages": {
+                    "blank": "Please enter a username.",
+                    "required": "Please enter a username.",
+                    "unique": "Username already exists.",
+                }
+            },
+            "password": {
+                "write_only": True,
+                "error_messages": {
+                    "blank": "Please enter a password.",
+                    "required": "Please enter a password.",
+                },
+            },
+        }
+
+    def validate_username(self, value):
+        username = value.strip()
+
+        if User.objects.filter(username__iexact=username).exists():
+            raise serializers.ValidationError("Username already exists.")
+
+        return username
 
     def create(self, validated_data):
-        print(validated_data)
         user = User.objects.create_user(**validated_data)
         return user
+
+
+class LocalTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields[self.username_field].error_messages.update({
+            "blank": "Please enter a username.",
+            "required": "Please enter a username.",
+        })
+        self.fields["password"].error_messages.update({
+            "blank": "Please enter a password.",
+            "required": "Please enter a password.",
+        })
+
+    def validate(self, attrs):
+        username = attrs.get(self.username_field, "").strip()
+        password = attrs.get("password", "")
+
+        if not username:
+            raise serializers.ValidationError({"username": "Please enter a username."})
+
+        if not password:
+            raise serializers.ValidationError({"password": "Please enter a password."})
+
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"username": "Username does not exist."})
+
+        if not user.check_password(password):
+            raise serializers.ValidationError({"password": "Incorrect password."})
+
+        if not user.is_active:
+            raise serializers.ValidationError({"detail": "This account is disabled."})
+
+        attrs[self.username_field] = user.get_username()
+        return super().validate(attrs)
 
 # PRODUCT
 class ProductSerializer(serializers.ModelSerializer):
@@ -354,4 +414,3 @@ class SupplierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Supplier
         fields = '__all__'
-
