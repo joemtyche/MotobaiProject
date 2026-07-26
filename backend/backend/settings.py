@@ -13,23 +13,34 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
-
-load_dotenv()
+from django.core.management.utils import get_random_secret_key
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
+
+def env_bool(name, default=False):
+    return os.environ.get(name, str(default)).lower() in {"1", "true", "yes", "on"}
+
+
+def env_list(name, default):
+    value = os.environ.get(name)
+    if not value:
+        return default
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#3s24ty_2ke3=()cm3fobeu+q_83+ls83u^n2s6t=9g%vz$t72'
+# Set DJANGO_SECRET_KEY in backend/.env for stable local sessions.
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", get_random_secret_key())
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool("DJANGO_DEBUG", True)
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", ["127.0.0.1", "localhost"])
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -100,11 +111,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'motobai',
-        'USER': 'root',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'NAME': os.environ.get('DB_NAME', 'motobai'),
+        'USER': os.environ.get('DB_USER', 'root'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'root'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
     }
 }
 
@@ -150,7 +161,10 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = env_list(
+    "DJANGO_CORS_ALLOWED_ORIGINS",
+    ["http://127.0.0.1:5173", "http://localhost:5173"],
+)
 CORS_ALLOW_CREDENTIALS = True
 
-APPEND_SLASH = False
+APPEND_SLASH = True

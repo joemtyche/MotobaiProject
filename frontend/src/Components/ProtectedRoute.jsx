@@ -1,10 +1,17 @@
 import { Navigate } from "react-router-dom";
-import { ACCESS_TOKEN } from "../constants";
+import {
+  clearAuthTokens,
+  getAccessToken,
+  getRefreshToken,
+  isTokenExpired,
+} from "../authTokens";
 
 function ProtectedRoute({ children }) {
-  const token = localStorage.getItem(ACCESS_TOKEN);
+  const accessToken = getAccessToken();
+  const refreshToken = getRefreshToken();
 
-  if (!token) {
+  if (!accessToken || !refreshToken || isTokenExpired(refreshToken)) {
+    clearAuthTokens();
     return <Navigate to="/login" replace />;
   }
 

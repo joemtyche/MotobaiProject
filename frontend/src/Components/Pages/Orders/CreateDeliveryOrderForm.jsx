@@ -59,7 +59,7 @@ const CreateDeliveryOrderForm = ({ confirmHandler }) => {
       const deductions = parseFloat(deduction);
 
       try {
-        const res = await api.post("http://127.0.0.1:8000/api/order/create/", {
+        const res = await api.post("/api/order/create/", {
           order_details: orderItems,
           order_type: "Delivery",
           account: selectedAccount,

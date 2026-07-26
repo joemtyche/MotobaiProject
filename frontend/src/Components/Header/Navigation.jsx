@@ -7,7 +7,7 @@ import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 import { BuildingStorefrontIcon } from "@heroicons/react/24/outline";
 import NavDropDown from "./NavDropDown";
 import DynamicCustomLink from "../DynamicComponents/DynamicCustomLink";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants";
+import { clearAuthTokens } from "../../authTokens";
 import Swal from 'sweetalert2'
 import { useNavigate } from "react-router-dom";
 
@@ -24,9 +24,7 @@ function Navigation() {
 
   const navigate = useNavigate();
   const logout = () => {
-    // Clear tokens from localStorage
-    localStorage.removeItem(ACCESS_TOKEN);
-    localStorage.removeItem(REFRESH_TOKEN);
+    clearAuthTokens();
   
     // Show success message
     Swal.fire({

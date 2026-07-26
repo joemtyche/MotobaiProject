@@ -110,11 +110,11 @@ FLUSH PRIVILEGES;
 EXIT;
 ```
 
-Then update `backend/backend/settings.py` to use:
+Then update `backend/.env` during backend setup:
 
-```python
-'USER': 'motobai',
-'PASSWORD': 'motobai',
+```text
+DB_USER=motobai
+DB_PASSWORD=motobai
 ```
 
 #### Method B - Windows MySQL Installer + Workbench
@@ -137,12 +137,8 @@ Then update `backend/backend/settings.py` to use:
 CREATE DATABASE IF NOT EXISTS motobai;
 ```
 
-If you choose a root password other than `root`, update `backend/backend/settings.py`:
+If you choose a root password other than `root`, update `DB_PASSWORD` in `backend/.env` during backend setup.
 
-```python
-'USER': 'root',
-'PASSWORD': 'your_password_here',
-```
 
 ### 3. Set up the frontend
 
@@ -162,8 +158,6 @@ Add:
 ```
 VITE_API_URL="http://127.0.0.1:8000"
 ```
-
-> ⚠️ Use `127.0.0.1` and not `localhost` — the browser treats them as different origins and CORS will block requests if you use `localhost`.
 
 The frontend defaults to `http://127.0.0.1:8000` when `VITE_API_URL` is not set.
 
@@ -185,6 +179,24 @@ python -m pip install -r requirements.txt
 ```
 
 `requirements.txt` is for the local MySQL/MariaDB backend setup.
+
+Create the backend local environment file:
+
+Fedora/Linux:
+
+```bash
+cp .env.example .env
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+Windows PowerShell:
+
+```powershell
+copy .env.example .env
+py -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+Open `backend/.env`, paste the generated value into `DJANGO_SECRET_KEY`, and adjust `DB_PASSWORD` if your local database password is not `root`.
 
 ### 5. Confirm PyMySQL config
 
@@ -290,7 +302,7 @@ Reinstall or repair pip: https://pip.pypa.io/en/stable/installation/
 This is a known Windows build issue. Use PyMySQL instead (already covered in step 4–5 above). Do **not** try to install `mysqlclient` directly on Windows without MySQL C headers.
 
 ### Login returns CORS error
-Make sure your `.env` uses `http://127.0.0.1:8000` and **not** `http://localhost:8000`. Restart the frontend after changing `.env`.
+Make sure `frontend/.env` uses the same backend URL you are running, normally `http://127.0.0.1:8000`. If you run Vite on a different host or port, add that frontend origin to `DJANGO_CORS_ALLOWED_ORIGINS` in `backend/.env`, then restart Django.
 
 ### Login returns 500 / datetime error
 Open `backend/backend/settings.py` and set:
@@ -300,16 +312,7 @@ USE_TZ = False
 Then restart the Django server.
 
 ### Wrong database password
-Open `backend/backend/settings.py` and update the password to match what you set during MySQL installation:
-```python
-DATABASES = {
-    'default': {
-        ...
-        'PASSWORD': 'your_password_here',
-        ...
-    }
-}
-```
+Open `backend/.env` and update `DB_PASSWORD` to match what you set during MySQL installation.
 
 ---
 

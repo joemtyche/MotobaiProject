@@ -8,7 +8,6 @@ import Table from "../../DynamicComponents/DynamicTable.jsx";
 import Overview from "../../Overview.jsx";
 import DynamicForm from "../../DynamicComponents/DynamicForm.jsx";
 import DynamicModal from "../../DynamicComponents/DynamicModal.jsx";
-import api from "../../../api";
 import { useFetchData } from "../../Hooks/useFetchData.js";
 import { useDeleteData } from "../../Hooks/useDeleteData.js";
 import { useCreateData } from "../../Hooks/useCreateData.js";
@@ -206,94 +205,6 @@ const Employees = () => {
   };
 
   // const [loading, setLoading] = useState(false);
-
-  // const onSubmitHandler = async (form, callback) => {
-  //   setLoading(true);
-  //   if (method === "create") {
-  //     console.log("create method");
-  //     ////////////////////////////////////////// CODE FOR SAVING DATA
-  //     if (rowToEdit === null) {
-  //       try {
-  //         const res = await api.post(
-  //           "http://127.0.0.1:8000/api/employee/create/",
-  //           {
-  //             first_name: form.first_name,
-  //             middle_name: form.middle_name,
-  //             last_name: form.last_name,
-  //             city: form.city,
-  //             barangay: form.barangay,
-  //             street: form.street,
-  //             phone_number: form.phone_number,
-  //             email: form.email,
-  //           }
-  //         );
-
-  //         {
-  //           errorWindow ? toggleErrorWindow() : "";
-  //         }
-  //         triggerRefresh();
-  //         toggleModal();
-  //         callback();
-  //         setSuccessMethod("Added");
-  //         toggleSuccessWindow();
-  //         setRowToEdit(null);
-  //         errorFields = [];
-  //       } catch (error) {
-  //         for (const [key, value] of Object.entries(form)) {
-  //           if (!value) {
-  //             errorFields.push(key);
-  //           }
-  //         }
-  //         setErrors((e) => errorFields.join(", "));
-  //         {
-  //           !errorWindow ? toggleErrorWindow() : "";
-  //         }
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     }
-  //   } else if (method === "edit") {
-  //     try {
-  //       const res = await api.put(
-  //         `http://127.0.0.1:8000/api/employee/update/${rowIdEdit}/`,
-  //         {
-  //           first_name: form.first_name,
-  //           middle_name: form.middle_name,
-  //           last_name: form.last_name,
-  //           city: form.city,
-  //           barangay: form.barangay,
-  //           street: form.street,
-  //           phone_number: form.phone_number,
-  //           email: form.email,
-  //         }
-  //       );
-  //       {
-  //         errorWindow ? toggleErrorWindow() : "";
-  //       }
-  //       triggerRefresh();
-  //       toggleModal();
-  //       callback();
-  //       setSuccessMethod("Edited");
-  //       toggleSuccessWindow();
-  //       setRowToEdit(null);
-  //       errorFields = [];
-  //     } catch (error) {
-  //       for (const [key, value] of Object.entries(form)) {
-  //         if (!value) {
-  //           if (key !== "is_deleted") {
-  //             errorFields.push(key);
-  //           }
-  //         }
-  //       }
-  //       setErrors((e) => errorFields.join(", "));
-  //       {
-  //         !errorWindow ? toggleErrorWindow() : "";
-  //       }
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-  // };
 
   const [deleteBtn, setDeleteBtn] = useState(""); // HANDLES DELETE BUTTON STATE
   const [rowToEdit, setRowToEdit] = useState(null);

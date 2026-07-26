@@ -13,14 +13,8 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
 
   const fetchOrderDetail = async (orderId) => {
     try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/api/order/view/${orderId}/`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch orders");
-      }
-      const data = await response.json();
-      setOrderDetails(data);
+      const response = await api.get(`/api/order/view/${orderId}/`);
+      setOrderDetails(response.data);
     } catch (error) {
       console.error("Error fetching orders:", error);
     }
@@ -28,14 +22,8 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
 
   const fetchOrderDetailItems = async (orderDetailId) => {
     try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/api/orderdetails/view/${orderDetailId}/`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch order details");
-      }
-      const data = await response.json();
-      setOrderDetailItems(data);
+      const response = await api.get(`/api/orderdetails/view/${orderDetailId}/`);
+      setOrderDetailItems(response.data);
     } catch (error) {
       console.error("Error fetching order details:", error);
     }
@@ -48,7 +36,7 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
 
       // Loop through each item in returnItems
       for (const item of returnItems) {
-        const url = `http://127.0.0.1:8000/api/orderdetails/update/${item.order_detail_id}/`;
+        const url = `/api/orderdetails/update/${item.order_detail_id}/`;
 
         const formData = {
           order_detail_id: item.order_detail_id,
@@ -273,7 +261,7 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
   
 
       const res = await api.put(
-        `http://127.0.0.1:8000/api/ordertracking/update/${orderId}/`,
+        `/api/ordertracking/update/${orderId}/`,
         payload
       );
 

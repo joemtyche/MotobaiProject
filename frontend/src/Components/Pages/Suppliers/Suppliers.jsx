@@ -8,7 +8,6 @@ import Table from "../../DynamicComponents/DynamicTable.jsx";
 import Overview from "../../Overview.jsx";
 import DynamicForm from "../../DynamicComponents/DynamicForm.jsx";
 import DynamicModal from "../../DynamicComponents/DynamicModal.jsx";
-import api from "../../../api";
 import { useFetchData } from "../../Hooks/useFetchData.js";
 import { useDeleteData } from "../../Hooks/useDeleteData.js";
 import { useCreateData } from "../../Hooks/useCreateData.js";
@@ -156,103 +155,6 @@ const Suppliers = () => {
       setRowToEdit(null);
     }
   };
-
-  // const [loading, setLoading] = useState(false);
-
-  // const onSubmitHandler = async (form, callback) => {
-  //   setLoading(true);
-
-  //   if (method === "create") {
-  //     if (rowToEdit === null) {
-  //       ////////////////////////////////////////// CODE FOR SAVING DATA
-  //       try {
-  //         const res = await api.post(
-  //           "http://127.0.0.1:8000/api/supplier/create/",
-  //           {
-  //             supplier_name: form.supplier_name,
-  //             phone_number: form.phone_number,
-  //             description: form.description,
-  //           }
-  //         );
-
-  //         {
-  //           errorWindow ? toggleErrorWindow() : "";
-  //         }
-  //         triggerRefresh();
-  //         toggleModal();
-  //         callback();
-  //         setSuccessMethod("Added");
-  //         toggleSuccessWindow();
-  //         setRowToEdit(null);
-  //         errorFields = [];
-  //       } catch (error) {
-  //         for (const [key, value] of Object.entries(form)) {
-  //           if (!value) {
-  //             errorFields.push(key);
-  //           }
-  //         }
-  //         setErrors((e) => errorFields.join(", "));
-  //         {
-  //           !errorWindow ? toggleErrorWindow() : "";
-  //         }
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     }
-  //   } else if (method === "edit") {
-  //     console.log(`edit method, id: ` + rowIdEdit);
-  //     ////////////////////////////////////////// CODE FOR EDITING DATA
-  //     try {
-  //       const res = await api.put(
-  //         `http://127.0.0.1:8000/api/supplier/update/${rowIdEdit}/`,
-  //         {
-  //           supplier_name: form.supplier_name,
-  //           phone_number: form.phone_number,
-  //           description: form.description,
-  //         }
-  //       );
-  //       {
-  //         errorWindow ? toggleErrorWindow() : "";
-  //       }
-  //       triggerRefresh();
-  //       toggleModal();
-  //       callback();
-  //       setSuccessMethod("Edited");
-  //       toggleSuccessWindow();
-  //       setRowToEdit(null);
-  //       errorFields = [];
-  //     } catch (error) {
-  //       for (const [key, value] of Object.entries(form)) {
-  //         if (!value) {
-  //           if (key !== "is_deleted") {
-  //             errorFields.push(key);
-  //           }
-  //         }
-  //       }
-  //       setErrors((e) => errorFields.join(", "));
-  //       {
-  //         !errorWindow ? toggleErrorWindow() : "";
-  //       }
-  //       callback();
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   } else if (method === "delete") {
-  //     // rename rowIdEdit to rowIdSelected or smth similar
-  //     try {
-  //       const res = await api.delete(
-  //         `http://127.0.0.1:8000/api/supplier/delete/${rowIdEdit}`
-  //       );
-  //       console.log("product deleted.");
-  //     } catch (error) {
-  //       // feel free to change here
-  //       console.log(error);
-  //     } finally {
-  //       setLoading(false);
-  //       setRowIdEdit(null); // ito ung delete id
-  //     }
-  //   }
-  // };
 
   const [deleteBtn, setDeleteBtn] = useState(""); // HANDLES DELETE BUTTON STATE
   const [rowToEdit, setRowToEdit] = useState(null);

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
+import { setAuthTokens } from "../authTokens";
 import Logo from "../assets/Logo.png";
 import "./pages.css";
 import Swal from 'sweetalert2'
@@ -20,8 +20,7 @@ function Form({ route, method }) {
     try {
       const res = await api.post(route, { username, password });
       if (method === "login") {
-        localStorage.setItem(ACCESS_TOKEN, res.data.access);
-        localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+        setAuthTokens(res.data);
         Swal.fire({
           title: "Logged in!",
           icon: "success",

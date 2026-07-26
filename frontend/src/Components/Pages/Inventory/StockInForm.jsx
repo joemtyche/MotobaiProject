@@ -133,7 +133,7 @@ const StockInForm = ({ confirmHandler }) => {
 
       try {
         const res = await api.post(
-          "http://127.0.0.1:8000/api/stockin/create/",
+          "/api/stockin/create/",
           {
             inboundStockItems: inboundStockItems,
             supplier: selectedSupplier, // replace SelectedSupplier or smth

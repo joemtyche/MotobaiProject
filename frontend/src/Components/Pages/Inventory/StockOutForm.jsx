@@ -144,7 +144,7 @@ const StockOutForm = ({ confirmHandler }) => {
 
       try {
         const res = await api.post(
-          "http://127.0.0.1:8000/api/stockout/create/",
+          "/api/stockout/create/",
           {
             outboundStockItems: outboundStockItems,
             employee: selectedEmployee,

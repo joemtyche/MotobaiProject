@@ -7,13 +7,6 @@ PROJECT CONSTRAINTS
 - Do not add frontend-only mode, backendless mode, or online backend deployment support here.
 
 BIG FINDINGS / PRIORITY FIXES
-- Backend security is too open for anything public:
-  - SECRET_KEY is hardcoded.
-  - DEBUG is True.
-  - ALLOWED_HOSTS is ["*"].
-  - CORS_ALLOW_ALL_ORIGINS is True.
-  - Most API views override auth with AllowAny.
-- Several frontend calls still hardcode http://127.0.0.1:8000 instead of using the shared api wrapper / VITE_API_URL.
 - DynamicTable calls editRow(item.id) even when editRow is missing or null, which can crash list screens.
 - Order stock logic is risky:
   - OrderTracking can deduct stock on save while status is already validated.
@@ -39,5 +32,10 @@ RECENTLY ADDRESSED
 - Added default frontend API URL fallback to http://127.0.0.1:8000.
 - Fixed frontend refresh token endpoint to /api/token/refresh/.
 - Made backend/requirements.txt local-only.
+- Moved Django secret, debug, allowed hosts, CORS origins, and database connection settings to backend/.env.
+- Restricted API data endpoints to authenticated users; registration and JWT token routes remain public.
+- Moved frontend auth tokens from persistent localStorage to sessionStorage.
+- Replaced live hardcoded frontend backend URLs with shared api wrapper routes.
+- Removed dead commented frontend handlers that referenced hardcoded backend URLs.
 - Added safer local SQL seed file.
 - Updated README with CLI seed import instructions.
