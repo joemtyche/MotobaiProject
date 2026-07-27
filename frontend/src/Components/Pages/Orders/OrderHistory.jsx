@@ -186,14 +186,8 @@ export default function OrderHistory() {
 
         <div className={`flex flex-col flex-1 m-4`}>
           <div className={`m-4`}>
-            <div className={`flex gap-12 mb-12`}>
-              <h1 className={`text-3xl font-bold`}>Order History</h1>
-              <div className="flex gap-4 mr-32 items-center">
-                <label className="font-bold ">Status</label>
-                <select
-                  className={`min-w-[10vw] max-h-4 rounded-lg p-4`}
-                ></select>
-              </div>
+            <div className={`flex gap-12 mb-4`}>
+              <h1 className={`text-5xl font-bold leading-[60px]`}>Order History</h1>
             </div>
 
             <Table

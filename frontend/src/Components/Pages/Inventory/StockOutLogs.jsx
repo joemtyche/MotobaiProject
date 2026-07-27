@@ -95,8 +95,8 @@ export default function Inventory() {
 
         <div className={`flex flex-col flex-1 m-4`}>
           <div className={`m-4`}>
-            <div className={`flex justify-between mb-12`}>
-              <h1 className={`text-3xl font-bold`}>Stock-out History</h1>
+            <div className={`flex justify-between mb-4`}>
+              <h1 className={`text-5xl font-bold leading-[60px]`}>Stock-out History</h1>
             </div>
             <Table
               columnArr={tableColumns}

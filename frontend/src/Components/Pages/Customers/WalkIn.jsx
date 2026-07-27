@@ -152,7 +152,7 @@ const WalkIn = () => {
         <div className={`flex flex-col flex-1 m-4 `}>
           <div className={`m-4`}>
             <div className={`flex justify-between`}>
-              <h1 className={`text-3xl font-bold`}>Walk-In</h1>
+              <h1 className={`text-5xl font-bold leading-[60px]`}>Walk-In</h1>
               <div className={`flex`}>
                 <DynamicCustomLink to="/accounts">
                   <div>

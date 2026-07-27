@@ -204,7 +204,7 @@ export default function Products() {
         <div className={`flex flex-col flex-1 m-4 `}>
           <div className={`m-4`}>
             <div className={`flex justify-between`}>
-              <h1 className={`text-3xl font-bold`}>Products</h1>
+              <h1 className={`text-5xl font-bold leading-[60px]`}>Products</h1>
               <div className={`flex gap-4`}>
                 <button
                   onClick={toggleModal}

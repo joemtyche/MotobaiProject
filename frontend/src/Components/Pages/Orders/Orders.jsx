@@ -218,8 +218,8 @@ export default function Orders() {
 
         <div className={`flex flex-col flex-1 m-4`}>
           <div className={`m-4`}>
-            <div className={`flex gap-12 mb-12 justify-between`}>
-              <h1 className={`text-3xl font-bold`}>Order Management</h1>
+            <div className={`flex gap-12 mb-4 justify-between`}>
+              <h1 className={`text-5xl font-bold leading-[60px]`}>Order Management</h1>
               <div>
                 <div className="flex">
                   <button
