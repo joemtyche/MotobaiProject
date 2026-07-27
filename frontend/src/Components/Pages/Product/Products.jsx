@@ -8,6 +8,7 @@ import Table from "../../DynamicComponents/DynamicTable.jsx";
 import Overview from "../../Overview.jsx";
 import DynamicForm from "../../DynamicComponents/DynamicForm.jsx";
 import DynamicModal from "../../DynamicComponents/DynamicModal.jsx";
+import PageActionButton from "../../DynamicComponents/PageActionButton.jsx";
 import api from "../../../api";
 import { useFetchData } from "../../Hooks/useFetchData.js";
 import { useDeleteData } from "../../Hooks/useDeleteData.js";
@@ -202,21 +203,16 @@ export default function Products() {
         <Overview title={`Products`} overviewArr={overviewArr} />
 
         <div className={`flex flex-col flex-1 m-4 `}>
-          <div className={`m-4`}>
+          <div className="my-4 mr-4">
             <div className={`flex justify-between`}>
               <h1 className={`text-5xl font-bold leading-[60px]`}>Products</h1>
-              <div className={`flex gap-4`}>
-                <button
+              <div className="flex gap-4 pr-6">
+                <PageActionButton
                   onClick={toggleModal}
-                  className={`shadow-md text-white bg-red-600 border-2 border-red-800 rounded-lg px-4 py-2 mx-4 hover:bg-red-700  transition-all duration-100 flex gap-4 items-center`}
+                  icon={<ArrowDownTrayIcon className="size-5" />}
                 >
                   Create Product
-                  <div
-                    className={`py-2 px-3 rounded-lg bg-red-700 hover:bg-red-800 transition-all duration-100`}
-                  >
-                    <ArrowDownTrayIcon className="size-5" />
-                  </div>
-                </button>
+                </PageActionButton>
               </div>
             </div>
 

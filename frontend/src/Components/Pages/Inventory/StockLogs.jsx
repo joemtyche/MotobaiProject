@@ -102,7 +102,7 @@ export default function Inventory() {
         <Overview title={`Stock-in Information`} overviewArr={overviewArr} />
 
         <div className={`flex flex-col flex-1 m-4`}>
-          <div className={`m-4`}>
+          <div className="my-4 mr-4">
             <div className={`flex justify-between mb-4`}>
               <h1 className={`text-5xl font-bold leading-[60px]`}>Stock-in History</h1>
             </div>

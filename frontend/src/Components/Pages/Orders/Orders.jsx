@@ -7,6 +7,7 @@ import DetailsOrderModal from "./DetailsOrderModal.jsx";
 import { useFetchData } from "../../Hooks/useFetchData.js";
 import CreateDeliveryOrderForm from "./CreateDeliveryOrderForm.jsx";
 import CreateWalkinOrderForm from "./CreateWalkinOrderForm.jsx";
+import PageActionButton from "../../DynamicComponents/PageActionButton.jsx";
 
 export default function Orders() {
   const [orderDetails, setOrderDetails] = useState([]);
@@ -217,46 +218,36 @@ export default function Orders() {
         <Overview title={`Order Management`} overviewArr={overviewArr} />
 
         <div className={`flex flex-col flex-1 m-4`}>
-          <div className={`m-4`}>
-            <div className={`flex gap-12 mb-4 justify-between`}>
-              <h1 className={`text-5xl font-bold leading-[60px]`}>Order Management</h1>
-              <div>
-                <div className="flex">
-                  <button
-                    onClick={toggleCreateDeliveryModal}
-                    className={`text-gray-100 bg-red-600 border-2 border-red-800 rounded-lg px-4 py-2 mx-4 hover:bg-red-700  transition-all duration-100 flex gap-4 items-center shadow-md`}
-                  >
-                    Delivery Order
-                    <div
-                      className={`py-2 px-3 rounded-lg bg-red-700  transition-all duration-100`}
-                    >
-                      <TruckIcon className="size-5" />
-                    </div>
-                  </button>
-                  <button
-                    onClick={toggleCreateWalkinModal}
-                    className={`text-gray-100 bg-red-600 border-2 border-red-800 rounded-lg px-4 py-2 mx-4 hover:bg-red-700  transition-all duration-100 flex gap-4 items-center shadow-md`}
-                  >
-                    Walk-In Order
-                    <div
-                      className={`py-2 px-3 rounded-lg bg-red-700  transition-all duration-100`}
-                    >
-                      <GiftIcon className="size-5" />
-                    </div>
-                  </button>
-                  <DynamicModal
-                    modal={createDeliveryModal}
-                    toggleModal={toggleCreateDeliveryModal}
-                  >
-                    <CreateDeliveryOrderForm />
-                  </DynamicModal>
-                  <DynamicModal
-                    modal={createWalkinModal}
-                    toggleModal={toggleCreateWalkinModal}
-                  >
-                    <CreateWalkinOrderForm />
-                  </DynamicModal>
-                </div>
+          <div className="my-4 mr-4">
+            <div className={`flex justify-between mb-4`}>
+              <h1 className={`text-5xl font-bold leading-[60px]`}>
+                Order Management
+              </h1>
+              <div className="flex justify-end gap-4 pr-6">
+                <PageActionButton
+                  onClick={toggleCreateDeliveryModal}
+                  icon={<TruckIcon className="size-5" />}
+                >
+                  Delivery Order
+                </PageActionButton>
+                <PageActionButton
+                  onClick={toggleCreateWalkinModal}
+                  icon={<GiftIcon className="size-5" />}
+                >
+                  Walk-In Order
+                </PageActionButton>
+                <DynamicModal
+                  modal={createDeliveryModal}
+                  toggleModal={toggleCreateDeliveryModal}
+                >
+                  <CreateDeliveryOrderForm />
+                </DynamicModal>
+                <DynamicModal
+                  modal={createWalkinModal}
+                  toggleModal={toggleCreateWalkinModal}
+                >
+                  <CreateWalkinOrderForm />
+                </DynamicModal>
               </div>
             </div>
 

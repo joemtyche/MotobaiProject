@@ -185,7 +185,7 @@ export default function OrderHistory() {
         <Overview title={`Order History`} overviewArr={overviewArr} />
 
         <div className={`flex flex-col flex-1 m-4`}>
-          <div className={`m-4`}>
+          <div className="my-4 mr-4">
             <div className={`flex gap-12 mb-4`}>
               <h1 className={`text-5xl font-bold leading-[60px]`}>Order History</h1>
             </div>

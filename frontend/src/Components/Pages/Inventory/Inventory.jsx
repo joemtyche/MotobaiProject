@@ -6,6 +6,7 @@ import StockInForm from "./StockInForm.jsx";
 import DynamicModal from "../../DynamicComponents/DynamicModal.jsx";
 import { useFetchData } from "../../Hooks/useFetchData.js";
 import StockOutForm from "./StockOutForm.jsx";
+import PageActionButton from "../../DynamicComponents/PageActionButton.jsx";
 
 export default function Inventory() {
   const [stockInModal, setStockInModal] = useState(false);
@@ -143,37 +144,23 @@ export default function Inventory() {
         <Overview title={`Inventory`} overviewArr={overviewArr} />
 
         <div className={`flex flex-col flex-1 m-4 `}>
-          <div className={`m-4`}>
+          <div className="my-4 mr-4">
             <div className={`flex justify-between`}>
               <h1 className={`text-5xl font-bold leading-[60px]`}>Inventory</h1>
 
-              <div className="flex mr-24">
-                <div>
-                  <button
-                    onClick={toggleStockOutModal}
-                    className={`bg-white border-2 border-red-800 rounded-lg px-4 py-2 mx-4 hover:bg-red-700 hover:text-gray-100 transition-all duration-100 flex gap-4 items-center shadow-md`}
-                  >
-                    Stock Out
-                    <div
-                      className={`text-gray-100 py-2 px-3 rounded-lg bg-red-800 hover:bg-red-800 transition-all duration-100`}
-                    >
-                      <MinusCircleIcon className="size-5" />
-                    </div>
-                  </button>
-                </div>
-                <div>
-                  <button
-                    onClick={toggleStockInModal}
-                    className={`bg-white border-2 border-red-800 rounded-lg px-4 py-2 mx-4 hover:bg-red-700 hover:text-gray-100 transition-all duration-100 flex gap-4 items-center shadow-md`}
-                  >
-                    Stock In
-                    <div
-                      className={`text-gray-100 py-2 px-3 rounded-lg bg-red-800 hover:bg-red-800 transition-all duration-100`}
-                    >
-                      <CubeIcon className="size-5" />
-                    </div>
-                  </button>
-                </div>
+              <div className="flex justify-end gap-4 pr-6">
+                <PageActionButton
+                  onClick={toggleStockOutModal}
+                  icon={<MinusCircleIcon className="size-5" />}
+                >
+                  Stock Out
+                </PageActionButton>
+                <PageActionButton
+                  onClick={toggleStockInModal}
+                  icon={<CubeIcon className="size-5" />}
+                >
+                  Stock In
+                </PageActionButton>
               </div>
             </div>
 

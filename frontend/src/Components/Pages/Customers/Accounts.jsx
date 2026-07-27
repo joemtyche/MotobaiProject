@@ -5,6 +5,7 @@ import Overview from "../../Overview.jsx";
 import DynamicForm from "../../DynamicComponents/DynamicForm.jsx";
 import DynamicModal from "../../DynamicComponents/DynamicModal.jsx";
 import DynamicCustomLink from "../../DynamicComponents/DynamicCustomLink.jsx";
+import PageActionButton from "../../DynamicComponents/PageActionButton.jsx";
 import { useFetchData } from "../../Hooks/useFetchData.js";
 import { useDeleteData } from "../../Hooks/useDeleteData.js";
 import { useCreateData } from "../../Hooks/useCreateData.js";
@@ -230,27 +231,26 @@ export default function Accounts() {
         <Overview overviewArr={overviewArr} />
 
         <div className={`flex flex-col flex-1 m-4 `}>
-          <div className={`m-4`}>
+          <div className="my-4 mr-4">
             <div className={`flex justify-between`}>
               <h1 className={`text-5xl font-bold leading-[60px]`}>Accounts</h1>
-              <div className={`flex`}>
-                <DynamicCustomLink to="/walkIn">
+              <div className="flex items-center gap-4 pr-6">
+                <DynamicCustomLink
+                  to="/walkIn"
+                  className="h-14 !min-w-[220px] !rounded-lg !border-red-800"
+                  contentClassName="px-5 py-2 text-lg font-semibold"
+                >
                   <div>
-                    <UserPlusIcon className="size-6 " />
+                    <UserPlusIcon className="size-6" />
                   </div>
                   <p>Walk-In Customers</p>
                 </DynamicCustomLink>
-                <button
+                <PageActionButton
                   onClick={toggleModal}
-                  className={`text-white bg-red-600 border-2 border-red-800 rounded-lg px-4 py-2 mx-4 hover:bg-red-700  transition-all duration-100 flex gap-4 items-center shadow-md`}
+                  icon={<UserPlusIcon className="size-5" />}
                 >
-                  <div
-                    className={`py-2 px-3 rounded-lg bg-red-700  transition-all duration-100`}
-                  >
-                    <UserPlusIcon className="size-5" />
-                  </div>
                   Create Account
-                </button>
+                </PageActionButton>
               </div>
             </div>
 
