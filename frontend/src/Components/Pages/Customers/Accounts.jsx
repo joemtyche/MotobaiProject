@@ -312,7 +312,7 @@ export default function Accounts() {
             columnArr={tableColumns}
             dataArr={account}
             editRow={handleEditRow}
-            sortField="account"
+            sortField="id"
             sortDirection="asc"
           />
         </div>

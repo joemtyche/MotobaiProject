@@ -74,13 +74,14 @@ export default function OrderHistory() {
 
     {
       header: "Order Type",
+      row: "order_type",
       customRender: (item) => {
         return (
           <p
             className={`font-bold uppercase ${
               item.order_type === "Delivery"
-                ? "text-red-600"
-                : "text-orange-600"
+                ? "text-blue-700"
+                : "text-amber-700"
             }`}
           >
             {item.order_type}
@@ -91,6 +92,7 @@ export default function OrderHistory() {
 
     {
       header: "Status",
+      row: "order_tracking.status",
       customRender: (item) => {
         if (item.order_tracking.status === "completed") {
           return (
@@ -100,13 +102,13 @@ export default function OrderHistory() {
           );
         } else if (item.order_tracking.status === "cancelled") {
           return (
-            <p className="uppercase font-semibold text-green-600">
+            <p className="uppercase font-semibold text-red-600">
               {item.order_tracking.status}
             </p>
           );
         } else if (item.order_tracking.status === "returned") {
           return (
-            <p className="uppercase font-semibold text-green-600">
+            <p className="uppercase font-semibold text-red-600">
               {item.order_tracking.status}
             </p>
           );

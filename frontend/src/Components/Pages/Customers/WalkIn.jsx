@@ -201,8 +201,8 @@ const WalkIn = () => {
             columnArr={tableColumns}
             dataArr={customer}
             editRow={handleEditRow}
-            sortField="date_created"
-            sortDirection="desc"
+            sortField="id"
+            sortDirection="asc"
           />
         </div>
         <div className="absolute z-20 top-20  left-1/2 transform -translate-x-1/2  ">

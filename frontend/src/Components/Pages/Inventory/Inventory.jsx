@@ -11,6 +11,18 @@ export default function Inventory() {
   const [stockInModal, setStockInModal] = useState(false);
   const [stockOutModal, setStockOutModal] = useState(false);
 
+  const getInventoryStatusRank = (item) => {
+    if (item.stock === 0) {
+      return 2;
+    }
+
+    if (item.stock < item.stock_minimum_threshold) {
+      return 0;
+    }
+
+    return 1;
+  };
+
   // const [packageModal, setPackageModal] = useState(false);
 
   // MODAL TOGGLE
@@ -40,18 +52,6 @@ export default function Inventory() {
       header: "Product Name",
       row: "product.product_name",
     },
-    {
-      header: "Description",
-      row: "product.description",
-      customRender: (item) => {
-        return (
-          <p className="overflow-y-auto max-w-[200px] max-h-[100px]">
-            {item.product.description}
-          </p>
-        );
-      },
-    },
-
     {
       header: "Product Type",
       row: "product.product_type",
@@ -83,7 +83,11 @@ export default function Inventory() {
 
     {
       header: "Status",
-      row: "stock",
+      row: "inventory_status",
+      sortAccessor: (item) => [
+        getInventoryStatusRank(item),
+        item.product?.sku || "",
+      ],
       customRender: (item) => {
         if (item.stock === 0) {
           return <p className={`text-orange-500 font-bold`}>INACTIVE</p>;
@@ -188,7 +192,7 @@ export default function Inventory() {
           <Table
             columnArr={tableColumns}
             dataArr={inventory}
-            sortField="stock"
+            sortField="inventory_status"
             sortDirection="asc"
           />
         </div>

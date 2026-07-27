@@ -79,6 +79,17 @@ export default function Products() {
       row: "product.product_name",
     },
     {
+      header: "Description",
+      row: "product.description",
+      customRender: (item) => {
+        return (
+          <p className="overflow-y-auto max-w-[240px] max-h-[100px]">
+            {item.product.description}
+          </p>
+        );
+      },
+    },
+    {
       header: "Price",
       row: "product.price",
     },
@@ -228,7 +239,7 @@ export default function Products() {
             columnArr={tableColumns}
             dataArr={product}
             editRow={handleEditRow}
-            sortField="product.product_name"
+            sortField="product.id"
             sortDirection="asc"
           />
         </div>

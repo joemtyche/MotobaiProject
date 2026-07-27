@@ -7,7 +7,6 @@ PROJECT CONSTRAINTS
 - Do not add frontend-only mode, backendless mode, or online backend deployment support here.
 
 BIG FINDINGS / PRIORITY FIXES
-- DynamicTable calls editRow(item.id) even when editRow is missing or null, which can crash list screens.
 - Order stock logic is risky:
   - OrderTracking can deduct stock on save while status is already validated.
   - Some serializer updates call order.order_tracking.save(), which can trigger extra stock changes.
@@ -28,6 +27,18 @@ DATA / LOCAL SETUP
 - Avoid Python 3.14 for backend local setup; use Python 3.11 or 3.12.
 
 RECENTLY ADDRESSED
+- Polished DynamicTable sorting:
+  - Header cells now trigger sorting across the full cell.
+  - Tables without edit handlers no longer call missing editRow callbacks.
+  - Temporary rows without backend ids now fall back to their row index for keys/actions.
+- Updated default table ordering:
+  - Accounts, employees, walk-in customers, products, and suppliers default to ID order.
+  - Inventory defaults to low stock, active, then inactive, with SKU ordering inside each group.
+- Refined table columns and sorting:
+  - Sort arrows now reserve fixed header space so clicking a header does not resize the table.
+  - Inventory table no longer shows product description.
+  - Products table now shows description immediately after product name.
+  - Order Management and Order History can sort by order type and status.
 - Re-enabled login/register for local frontend use.
 - Added default frontend API URL fallback to http://127.0.0.1:8000.
 - Fixed frontend refresh token endpoint to /api/token/refresh/.

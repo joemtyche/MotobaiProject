@@ -94,13 +94,14 @@ export default function Orders() {
     },
     {
       header: "Order Type",
+      row: "order_type",
       customRender: (item) => {
         return (
           <p
             className={`font-bold uppercase ${
               item.order_type === "Delivery"
-                ? "text-red-600"
-                : "text-orange-600"
+                ? "text-blue-700"
+                : "text-amber-700"
             }`}
           >
             {item.order_type}
@@ -111,6 +112,7 @@ export default function Orders() {
 
     {
       header: "Status",
+      row: "order_tracking.status",
       customRender: (item) => {
         if (item.order_tracking.status === "validated") {
           return (

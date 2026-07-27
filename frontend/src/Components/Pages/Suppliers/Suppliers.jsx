@@ -252,7 +252,7 @@ const Suppliers = () => {
             columnArr={tableColumns}
             dataArr={supplier}
             editRow={handleEditRow}
-            sortField="supplier_name"
+            sortField="id"
             sortDirection="asc"
           />
         </div>
