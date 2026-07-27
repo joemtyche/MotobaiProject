@@ -5,6 +5,7 @@ import { ArchiveBoxArrowDownIcon } from "@heroicons/react/24/outline";
 import { ShoppingCartIcon } from "@heroicons/react/24/outline";
 import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 import { BuildingStorefrontIcon } from "@heroicons/react/24/outline";
+import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
 import NavDropDown from "./NavDropDown";
 import DynamicCustomLink from "../DynamicComponents/DynamicCustomLink";
 import { clearAuthTokens } from "../../authTokens";
@@ -62,13 +63,13 @@ function Navigation() {
   ];
 
   return (
-    <nav className=" flex ml-6 justify-between max-h-12 gap-4 text-base">
+    <nav className="ml-6 flex flex-1 items-center gap-3 text-base">
       <div
         className={`flex flex-col relative`}
         onMouseEnter={onHoverAccounts}
         onMouseLeave={onHoverAccounts}
       >
-        <DynamicCustomLink to="/accounts">
+        <DynamicCustomLink to="/accounts" className="!min-w-[170px]">
           <div>
             <UserGroupIcon className="size-6 " />
           </div>
@@ -106,7 +107,7 @@ function Navigation() {
         onMouseEnter={onHoverInventory}
         onMouseLeave={onHoverInventory}
       >
-        <DynamicCustomLink to="/inventory">
+        <DynamicCustomLink to="/inventory" className="!min-w-[185px]">
           <div>
             <ArchiveBoxArrowDownIcon className="size-6 " />
           </div>
@@ -117,7 +118,7 @@ function Navigation() {
             <div className={`flex  item-center `}>
               <NavDropDown
                 navigationArr={inventoryNavigationArr}
-                className={"flex-row"}
+                className="!min-w-[185px]"
               />
             </div>
           )}
@@ -136,12 +137,14 @@ function Navigation() {
         <p>Order History</p>
       </DynamicCustomLink>
 
-        <button
-          onClick={logout}
-          className="ml-auto flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-        >
-          Logout
-        </button>
+      <div className="mx-1 h-9 w-px shrink-0 bg-gray-300" aria-hidden="true" />
+      <button
+        onClick={logout}
+        className="flex shrink-0 items-center gap-2 rounded-md border border-red-700 bg-red-600 px-4 py-2 font-semibold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:bg-red-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-300"
+      >
+        <ArrowRightOnRectangleIcon className="size-5" />
+        Logout
+      </button>
     </nav>
   );
 }
