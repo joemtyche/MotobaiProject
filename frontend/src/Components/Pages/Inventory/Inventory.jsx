@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { MinusCircleIcon, CubeIcon } from "@heroicons/react/24/outline";
+import {
+  ArchiveBoxIcon,
+  CheckCircleIcon,
+  CubeIcon,
+  ExclamationTriangleIcon,
+  MinusCircleIcon,
+  NoSymbolIcon,
+} from "@heroicons/react/24/outline";
 import Table from "../../DynamicComponents/DynamicTable.jsx";
 import Overview from "../../Overview.jsx";
 import StockInForm from "./StockInForm.jsx";
@@ -11,13 +18,28 @@ import PageActionButton from "../../DynamicComponents/PageActionButton.jsx";
 export default function Inventory() {
   const [stockInModal, setStockInModal] = useState(false);
   const [stockOutModal, setStockOutModal] = useState(false);
+  const [inventoryFilter, setInventoryFilter] = useState("all");
 
-  const getInventoryStatusRank = (item) => {
+  const getInventoryStatus = (item) => {
     if (item.stock === 0) {
-      return 2;
+      return "inactive";
     }
 
     if (item.stock < item.stock_minimum_threshold) {
+      return "low-stock";
+    }
+
+    return "active";
+  };
+
+  const getInventoryStatusRank = (item) => {
+    const status = getInventoryStatus(item);
+
+    if (status === "inactive") {
+      return 2;
+    }
+
+    if (status === "low-stock") {
       return 0;
     }
 
@@ -102,6 +124,10 @@ export default function Inventory() {
   ];
 
   const { data: inventory, triggerRefresh } = useFetchData("inventory");
+  const filteredInventory =
+    inventoryFilter === "all"
+      ? inventory
+      : inventory.filter((item) => getInventoryStatus(item) === inventoryFilter);
 
   // DISPLAY TEMPLATE ON <OVERVIEW></OVERVIEW>
   let inactiveCount = 0;
@@ -111,37 +137,59 @@ export default function Inventory() {
   const statusCount = inventory;
 
   statusCount.forEach((item) => {
-    if (item.stock === 0) {
+    const status = getInventoryStatus(item);
+
+    if (status === "inactive") {
       inactiveCount++;
-    } else if (item.stock < item.stock_minimum_threshold) {
+    } else if (status === "low-stock") {
       lowStockCount++;
     } else {
       activeCount++;
     }
   });
   const overviewArr = [
-    { title: "Products", quantity: `${inventory.length}` },
+    {
+      title: "Products",
+      quantity: `${inventory.length}`,
+      icon: <ArchiveBoxIcon />,
+      onClick: () => setInventoryFilter("all"),
+      active: inventoryFilter === "all",
+    },
     {
       title: "Active",
       quantity: `${activeCount}`,
       className: "!text-green-500",
+      icon: <CheckCircleIcon />,
+      onClick: () => setInventoryFilter("active"),
+      active: inventoryFilter === "active",
     },
     {
       title: "Low-Stock",
       quantity: `${lowStockCount}`,
       className: "!text-yellow-400",
+      icon: <ExclamationTriangleIcon />,
+      onClick: () => setInventoryFilter("low-stock"),
+      active: inventoryFilter === "low-stock",
     },
     {
       title: "Inactive",
       quantity: `${inactiveCount}`,
       className: "!text-orange-500",
+      icon: <NoSymbolIcon />,
+      onClick: () => setInventoryFilter("inactive"),
+      active: inventoryFilter === "inactive",
     },
   ];
 
   return (
     <section className={`font-main h-full overflow-hidden`}>
       <div className={`bg-normalGray box-border flex h-full `}>
-        <Overview title={`Inventory`} overviewArr={overviewArr} />
+        <Overview
+          title={`Inventory`}
+          overviewArr={overviewArr}
+          onReset={() => setInventoryFilter("all")}
+          resetActive={inventoryFilter === "all"}
+        />
 
         <div className={`flex flex-col flex-1 m-4 `}>
           <div className="my-4 mr-4">
@@ -177,7 +225,7 @@ export default function Inventory() {
             </DynamicModal>
             <Table
               columnArr={tableColumns}
-              dataArr={inventory}
+              dataArr={filteredInventory}
               sortField="inventory_status"
               sortDirection="asc"
             />

@@ -1,4 +1,10 @@
 import React, { useState } from "react";
+import {
+  ArrowPathIcon,
+  CheckCircleIcon,
+  ClipboardDocumentListIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
 import Table from "../../DynamicComponents/DynamicTable.jsx";
 import Overview from "../../Overview.jsx";
 import DynamicModal from "../../DynamicComponents/DynamicModal.jsx";
@@ -8,15 +14,17 @@ import { useFetchData } from "../../Hooks/useFetchData.js";
 export default function OrderHistory() {
   const [orderDetails, setOrderDetails] = useState([]);
   const [orderId, setOrderId] = useState();
+  const [historyFilter, setHistoryFilter] = useState("all");
   const { data: orders } = useFetchData("order");
 
+  const historyStatuses = ["completed", "cancelled", "returned"];
   const order = orders.filter(
-    (item) =>
-      item.order_tracking?.status !== "unvalidated" &&
-      item.order_tracking?.status !== "validated" &&
-      item.order_tracking?.status !== "shipped" &&
-      item.order_tracking?.status !== "received"
+    (item) => historyStatuses.includes(item.order_tracking?.status)
   );
+  const filteredOrder =
+    historyFilter === "all"
+      ? order
+      : order.filter((item) => item.order_tracking?.status === historyFilter);
 
   //DISPLAY TEMPLATE ON <TABLE></TABLE>
   const tableColumns = [
@@ -149,7 +157,7 @@ export default function OrderHistory() {
   let cancelledOrderCount = 0;
   let returnedOrderCount = 0;
 
-  const statusCount = orders;
+  const statusCount = order;
 
   statusCount.forEach((item) => {
     if (item.order_tracking.status === "completed") {
@@ -161,28 +169,48 @@ export default function OrderHistory() {
     }
   });
   const overviewArr = [
-    { title: "Orders", quantity: `${order.length}` },
+    {
+      title: "Orders",
+      quantity: `${order.length}`,
+      icon: <ClipboardDocumentListIcon />,
+      onClick: () => setHistoryFilter("all"),
+      active: historyFilter === "all",
+    },
     {
       title: "Completed",
       quantity: `${completedOrderCount}`,
       className: "!text-green-500",
+      icon: <CheckCircleIcon />,
+      onClick: () => setHistoryFilter("completed"),
+      active: historyFilter === "completed",
     },
     {
       title: "Cancelled",
       quantity: `${cancelledOrderCount}`,
       className: "!text-red-300",
+      icon: <XCircleIcon />,
+      onClick: () => setHistoryFilter("cancelled"),
+      active: historyFilter === "cancelled",
     },
     {
       title: "Returned",
       quantity: `${returnedOrderCount}`,
-      className: "!text-orange-500",
+      className: "!text-red-300",
+      icon: <ArrowPathIcon />,
+      onClick: () => setHistoryFilter("returned"),
+      active: historyFilter === "returned",
     },
   ];
 
   return (
     <section className={`font-main h-full overflow-hidden`}>
       <div className={`bg-normalGray box-border flex h-full `}>
-        <Overview title={`Order History`} overviewArr={overviewArr} />
+        <Overview
+          title={`Order History`}
+          overviewArr={overviewArr}
+          onReset={() => setHistoryFilter("all")}
+          resetActive={historyFilter === "all"}
+        />
 
         <div className={`flex flex-col flex-1 m-4`}>
           <div className="my-4 mr-4">
@@ -192,7 +220,7 @@ export default function OrderHistory() {
 
             <Table
               columnArr={tableColumns}
-              dataArr={order}
+              dataArr={filteredOrder}
               editRow={handleRowDetails}
               sortField="order_tracking.last_updated"
               sortDirection="desc"

@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { GiftIcon, TruckIcon } from "@heroicons/react/24/outline";
+import {
+  CheckCircleIcon,
+  ClockIcon,
+  GiftIcon,
+  InboxArrowDownIcon,
+  ShoppingCartIcon,
+  TruckIcon,
+} from "@heroicons/react/24/outline";
 import Table from "../../DynamicComponents/DynamicTable.jsx";
 import Overview from "../../Overview.jsx";
 import DynamicModal from "../../DynamicComponents/DynamicModal.jsx";
@@ -12,6 +19,7 @@ import PageActionButton from "../../DynamicComponents/PageActionButton.jsx";
 export default function Orders() {
   const [orderDetails, setOrderDetails] = useState([]);
   const [orderId, setOrderId] = useState();
+  const [orderFilter, setOrderFilter] = useState("all");
   const { data: orders, triggerRefresh } = useFetchData("order");
 
   const order = orders.filter(
@@ -20,6 +28,10 @@ export default function Orders() {
       item.order_tracking?.status !== "returned" &&
       item.order_tracking?.status !== "cancelled"
   );
+  const filteredOrder =
+    orderFilter === "all"
+      ? order
+      : order.filter((item) => item.order_tracking?.status === orderFilter);
 
   const [createDeliveryModal, setCreateDeliveryModal] = useState(false);
   const [createWalkinModal, setCreateWalkinModal] = useState(false);
@@ -183,39 +195,62 @@ export default function Orders() {
       validatedCount++;
     } else if (item.order_tracking.status === "shipped") {
       shippedCount++;
-    } else {
+    } else if (item.order_tracking.status === "received") {
       receivedCount++;
     }
   });
   // DISPLAY TEMPLATE ON <OVERVIEW></OVERVIEW>
   const overviewArr = [
-    { title: "Orders", quantity: `${order.length}` },
+    {
+      title: "Orders",
+      quantity: `${order.length}`,
+      icon: <ShoppingCartIcon />,
+      onClick: () => setOrderFilter("all"),
+      active: orderFilter === "all",
+    },
     {
       title: "Unvalidated",
       quantity: `${unvalidatedCount}`,
       className: "!text-gray-400",
+      icon: <ClockIcon />,
+      onClick: () => setOrderFilter("unvalidated"),
+      active: orderFilter === "unvalidated",
     },
     {
       title: "Validated",
       quantity: `${validatedCount}`,
       className: "!text-green-500",
+      icon: <CheckCircleIcon />,
+      onClick: () => setOrderFilter("validated"),
+      active: orderFilter === "validated",
     },
     {
       title: "Shipped",
       quantity: `${shippedCount}`,
       className: "!text-blue-500",
+      icon: <TruckIcon />,
+      onClick: () => setOrderFilter("shipped"),
+      active: orderFilter === "shipped",
     },
     {
       title: "Received",
       quantity: `${receivedCount}`,
       className: "!text-yellow-500",
+      icon: <InboxArrowDownIcon />,
+      onClick: () => setOrderFilter("received"),
+      active: orderFilter === "received",
     },
   ];
 
   return (
     <section className={`font-main h-full overflow-hidden`}>
       <div className={`bg-normalGray box-border flex h-full `}>
-        <Overview title={`Order Management`} overviewArr={overviewArr} />
+        <Overview
+          title={`Order Management`}
+          overviewArr={overviewArr}
+          onReset={() => setOrderFilter("all")}
+          resetActive={orderFilter === "all"}
+        />
 
         <div className={`flex flex-col flex-1 m-4`}>
           <div className="my-4 mr-4">
@@ -253,7 +288,7 @@ export default function Orders() {
 
             <Table
               columnArr={tableColumns}
-              dataArr={order}
+              dataArr={filteredOrder}
               editRow={handleRowDetails}
               sortField="order_tracking.last_updated"
               sortDirection="desc"
