@@ -80,6 +80,7 @@ export default function DynamicForm({
                         label,
                         name,
                         type,
+                        inputMode,
                         readOnly,
                         maxLength,
                         pattern,
@@ -99,6 +100,7 @@ export default function DynamicForm({
                           id={name}
                           name={name}
                           type={type}
+                          inputMode={inputMode}
                           maxLength={maxLength}
                           pattern={pattern}
                           minLength={minLength}

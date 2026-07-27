@@ -82,7 +82,8 @@ const Suppliers = () => {
     {
       label: "Phone Number",
       name: "phone_number",
-      type: "number",
+      type: "tel",
+      inputMode: "tel",
     },
     {
       label: "Description",

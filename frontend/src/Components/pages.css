@@ -16,23 +16,6 @@ input:valid + .label-line {
   padding: 6px;
 }
 
-input:invalid {
-  animation: shake 300ms;
-  color: rgb(160, 0, 0);
-}
-
-@keyframes shake {
-  25% {
-    transform: translateX(4px);
-  }
-  50% {
-    transform: translateX(-4px);
-  }
-  75% {
-    transform: translateX(4px);
-  }
-}
-
 tr:first-child th:first-child {
   border-top-left-radius: 8px;
 }

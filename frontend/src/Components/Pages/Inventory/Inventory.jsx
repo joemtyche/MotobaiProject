@@ -188,7 +188,6 @@ export default function Inventory() {
           title={`Inventory`}
           overviewArr={overviewArr}
           onReset={() => setInventoryFilter("all")}
-          resetActive={inventoryFilter === "all"}
         />
 
         <div className={`flex flex-col flex-1 m-4 `}>

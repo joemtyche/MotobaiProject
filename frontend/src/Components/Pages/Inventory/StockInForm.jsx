@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Logo from "../../../assets/Logo.png";
 import Table from "../../DynamicComponents/DynamicTable";
+import SearchableDropdown from "../../DynamicComponents/SearchableDropdown";
 import api from "../../../api";
 import {
   ChevronDownIcon,
@@ -180,24 +181,102 @@ const StockInForm = ({ confirmHandler }) => {
     }
   };
 
-  const validateInput = (field, options, fieldName) => {
-    // Normalize input and options for comparison
-    const inputValue = (form[field]?.trim() || "").toLowerCase();
-    const isValid = options.some(
-      (option) => option[fieldName].trim().toLowerCase() === inputValue
+  const [searchInput, setSearchInput] = useState("");
+  const searchInputClassName = "text-lg p-2 min-w-[350px]";
+  const getProductName = (item) => item.product?.product_name || "";
+  const getSupplierName = (item) => item.supplier_name || "";
+  const getEmployeeName = (employee) =>
+    [employee.first_name, employee.middle_name, employee.last_name]
+      .filter(Boolean)
+      .join(" ");
+  const findExactOption = (options, getLabel, value) =>
+    options.find(
+      (option) => getLabel(option).toLowerCase() === value.trim().toLowerCase()
     );
 
-    if (!isValid) {
-      setForm((prevForm) => ({
-        ...prevForm,
-        [field]: "",
-        [`${field}_id`]: null,
-      }));
-      alert(`Please input the correct ${fieldName.replace("_", " ")}`);
-    }
+  const handleProductInputChange = (e) => {
+    const value = e.target.value;
+    const selectedProduct = findExactOption(productOptions, getProductName, value);
+
+    setForm((prevForm) => ({
+      ...prevForm,
+      product_name: value,
+      inventory_id: selectedProduct ? selectedProduct.id : null,
+      sku: selectedProduct ? selectedProduct.product.sku : "",
+    }));
   };
 
-  const [searchInput, setSearchInput] = useState("");
+  const handleProductSelect = (item) => {
+    setForm((prevForm) => ({
+      ...prevForm,
+      product_name: getProductName(item),
+      inventory_id: item.id,
+      sku: item.product.sku,
+    }));
+  };
+
+  const handleSupplierInputChange = (e) => {
+    const value = e.target.value;
+    const selectedOption = findExactOption(supplierOptions, getSupplierName, value);
+
+    setForm((prevForm) => ({
+      ...prevForm,
+      supplier_name: value,
+      supplier_id: selectedOption ? selectedOption.id : null,
+    }));
+    setSelectedSupplier(selectedOption ? selectedOption.id : null);
+  };
+
+  const handleSupplierSelect = (item) => {
+    setForm((prevForm) => ({
+      ...prevForm,
+      supplier_name: getSupplierName(item),
+      supplier_id: item.id,
+    }));
+    setSelectedSupplier(item.id);
+  };
+
+  const handleEmployeeInputChange = (e) => {
+    const value = e.target.value;
+    const selectedOption = findExactOption(employeeOptions, getEmployeeName, value);
+
+    setSearchInput(value);
+    setForm((prevForm) => ({
+      ...prevForm,
+      employee_name: value,
+      employee_id: selectedOption ? selectedOption.id : null,
+    }));
+    setSelectedEmployee(selectedOption ? selectedOption.id : null);
+  };
+
+  const handleEmployeeSelect = (employee) => {
+    const employeeName = getEmployeeName(employee);
+
+    setForm((prevForm) => ({
+      ...prevForm,
+      employee_name: employeeName,
+      employee_id: employee.id,
+    }));
+    setSelectedEmployee(employee.id);
+    setSearchInput(employeeName);
+  };
+
+  const validateSelectedOption = ({
+    value,
+    options,
+    getLabel,
+    message,
+    onInvalid,
+  }) => {
+    if (!value) {
+      return;
+    }
+
+    if (!findExactOption(options, getLabel, value)) {
+      alert(message);
+      onInvalid();
+    }
+  };
 
   return (
     <section>
@@ -222,72 +301,32 @@ const StockInForm = ({ confirmHandler }) => {
                     <label className="font-bold">Product</label>
                     <div className={`flex justify-center relative`}>
                       <div className={`border-2 rounded-md`}>
-                        <input
-                          autoComplete="off"
+                        <SearchableDropdown
                           placeholder="Search for Product"
-                          className="text-lg p-2 min-w-[350px]"
-                          type="text"
-                          onChange={(e) =>
-                            onChangeHandler(e, "product_name", {
-                              inventory_id:
-                                productOptions.find(
-                                  (item) =>
-                                    item.product.product_name === e.target.value
-                                ) || null,
-                            })
-                          }
+                          inputClassName={searchInputClassName}
+                          options={productOptions}
+                          getOptionLabel={getProductName}
+                          getOptionKey={(item) => item.id}
+                          onInputChange={handleProductInputChange}
+                          onSelect={handleProductSelect}
                           onBlur={() => {
-                            if (form.product_name) {
-                              validateInput(
-                                "product_name",
-                                productOptions.map((item) => ({
-                                  product_name: item.product.product_name,
-                                })), // Flatten options to match the expected structure
-                                "product_name"
-                              );
-                            }
+                            validateSelectedOption({
+                              value: form.product_name,
+                              options: productOptions,
+                              getLabel: getProductName,
+                              message: "Please select a valid product.",
+                              onInvalid: () =>
+                                setForm((prevForm) => ({
+                                  ...prevForm,
+                                  product_name: "",
+                                  inventory_id: null,
+                                  sku: "",
+                                })),
+                            });
                           }}
                           name="product_name"
                           value={form.product_name || ""}
                         />
-                        <div
-                          className={`flex flex-col absolute bg-gray-50 overflow-y-auto max-h-[180px] min-w-[450px] shadow-md rounded-md z-50`}
-                        >
-                          {productOptions
-                            .filter((item) => {
-                              const searchTerm = (
-                                form.product_name || ""
-                              ).toLowerCase();
-                              const fullName =
-                                item.product.product_name.toLowerCase();
-
-                              return (
-                                searchTerm &&
-                                fullName.startsWith(searchTerm) &&
-                                fullName !== searchTerm
-                              );
-                            })
-                            .map((item) => {
-                              return (
-                                <div
-                                  onMouseDown={(e) => e.preventDefault()}
-                                  onClick={() =>
-                                    setForm({
-                                      ...form,
-                                      product_name: item.product.product_name,
-                                      inventory_id: item.product.id,
-                                      sku: item.product.sku,
-                                    })
-                                  }
-                                  data-id={item.product.id}
-                                  key={item.product.id}
-                                  className={`hover:bg-red-700 hover:text-white p-4 rounded-sm transition-all duration-100 cursor-pointer`}
-                                >
-                                  {item.product.product_name}
-                                </div>
-                              );
-                            })}
-                        </div>
                       </div>
                       <div>
                         <ChevronDownIcon
@@ -363,71 +402,33 @@ const StockInForm = ({ confirmHandler }) => {
                     <label className="font-bold">Supplier</label>
                     <div className={`flex justify-center relative`}>
                       <div className={`border-2 rounded-md`}>
-                        <input
+                        <SearchableDropdown
                           placeholder="Search for Supplier"
-                          autoComplete="off"
-                          className="text-lg p-2 min-w-[350px]"
-                          type="text"
-                          onChange={(e) =>
-                            onChangeHandler(e, "supplier_name", {
-                              supplier_id:
-                                supplierOptions.find(
-                                  (item) =>
-                                    item.supplier_name === e.target.value
-                                ) || null,
-                            })
-                          }
+                          inputClassName={searchInputClassName}
+                          options={supplierOptions}
+                          getOptionLabel={getSupplierName}
+                          getOptionKey={(item) => item.id}
+                          onInputChange={handleSupplierInputChange}
+                          onSelect={handleSupplierSelect}
                           onBlur={() => {
-                            if (form.supplier_name) {
-                              validateInput(
-                                "supplier_name",
-                                supplierOptions,
-                                "supplier_name"
-                              );
-                            }
+                            validateSelectedOption({
+                              value: form.supplier_name,
+                              options: supplierOptions,
+                              getLabel: getSupplierName,
+                              message: "Please select a valid supplier.",
+                              onInvalid: () => {
+                                setForm((prevForm) => ({
+                                  ...prevForm,
+                                  supplier_name: "",
+                                  supplier_id: null,
+                                }));
+                                setSelectedSupplier(null);
+                              },
+                            });
                           }}
                           name="supplier_name"
                           value={form.supplier_name || ""}
                         />
-                        <div
-                          className={`flex flex-col absolute bg-gray-50 overflow-y-auto max-h-[180px] min-w-[450px] shadow-md rounded-md z-50`}
-                        >
-                          {supplierOptions
-                            .filter((item) => {
-                              const searchTerm = (
-                                form.supplier_name || ""
-                              ).toLowerCase();
-                              const fullName = item.supplier_name.toLowerCase();
-
-                              return (
-                                searchTerm &&
-                                fullName.startsWith(searchTerm) &&
-                                fullName !== searchTerm
-                              );
-                            })
-                            .map((item) => {
-                              return (
-                                <div
-                                  onMouseDown={(e) => {
-                                    e.preventDefault();
-                                  }}
-                                  onClick={() => {
-                                    setForm({
-                                      ...form,
-                                      supplier_name: item.supplier_name,
-                                      supplier_id: item.id,
-                                    });
-                                    setSelectedSupplier(item.id); // Update state
-                                  }}
-                                  data-id={item.id}
-                                  key={item.id}
-                                  className={`hover:bg-red-700 hover:text-white p-4 rounded-sm transition-all duration-100 cursor-pointer`}
-                                >
-                                  {item.supplier_name}
-                                </div>
-                              );
-                            })}
-                        </div>
                       </div>
                       <div>
                         <ChevronDownIcon
@@ -439,94 +440,34 @@ const StockInForm = ({ confirmHandler }) => {
                     <label className="font-bold ">Employee</label>
                     <div className={`flex justify-center relative`}>
                       <div className={`border-2 rounded-md`}>
-                        <input
-                          autoComplete="off"
+                        <SearchableDropdown
                           placeholder="Search for Employee"
-                          className="text-lg p-2 min-w-[350px]"
-                          type="text"
-                          onChange={(e) => {
-                            setSearchInput(e.target.value); // Update the search input value
-                          }}
+                          inputClassName={searchInputClassName}
+                          options={employeeOptions}
+                          getOptionLabel={getEmployeeName}
+                          getOptionKey={(employee) => employee.id}
+                          onInputChange={handleEmployeeInputChange}
+                          onSelect={handleEmployeeSelect}
                           onBlur={() => {
-                            // Validate the input only if the user hasn't selected from the dropdown
-                            const matchedEmployee = employeeOptions.find(
-                              (employee) => {
-                                const fullName = [
-                                  employee.first_name,
-                                  employee.middle_name,
-                                  employee.last_name,
-                                ]
-                                  .join(" ")
-                                  .toLowerCase();
-                                return fullName === searchInput.toLowerCase();
-                              }
-                            );
-
-                            if (!matchedEmployee) {
-                              alert("Please select a valid employee.");
-                              setSearchInput(""); // Reset input
-                              setForm({
-                                ...form,
-                                employee_name: "",
-                                employee_id: null,
-                              });
-                              setSelectedEmployee(null);
-                            }
+                            validateSelectedOption({
+                              value: searchInput,
+                              options: employeeOptions,
+                              getLabel: getEmployeeName,
+                              message: "Please select a valid employee.",
+                              onInvalid: () => {
+                                setSearchInput("");
+                                setForm((prevForm) => ({
+                                  ...prevForm,
+                                  employee_name: "",
+                                  employee_id: null,
+                                }));
+                                setSelectedEmployee(null);
+                              },
+                            });
                           }}
                           name="employee_name"
-                          value={searchInput} // Bind to the search input state
+                          value={searchInput}
                         />
-                        <div
-                          className={`flex flex-col absolute bg-gray-50 overflow-y-auto max-h-[180px] min-w-[450px] shadow-md rounded-md z-50`}
-                        >
-                          {employeeOptions
-                            .filter((employee) => {
-                              const searchTerm = searchInput.toLowerCase();
-                              const fullName = [
-                                employee.first_name,
-                                employee.middle_name,
-                                employee.last_name,
-                              ]
-                                .join(" ")
-                                .toLowerCase();
-
-                              return (
-                                searchTerm &&
-                                fullName.startsWith(searchTerm) &&
-                                fullName !== searchTerm
-                              );
-                            })
-                            .map((employee) => (
-                              <div
-                                key={employee.id}
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() => {
-                                  // Update the form when an option is clicked
-                                  setForm({
-                                    ...form,
-                                    employee_name: [
-                                      employee.first_name,
-                                      employee.middle_name,
-                                      employee.last_name,
-                                    ].join(" "),
-                                    employee_id: employee.id,
-                                  });
-                                  setSelectedEmployee(employee.id); // Update state
-                                  setSearchInput(
-                                    [
-                                      employee.first_name,
-                                      employee.middle_name,
-                                      employee.last_name,
-                                    ].join(" ")
-                                  ); // Set the input value to the selected employee
-                                }}
-                                className={`hover:bg-red-700 hover:text-white p-4 rounded-sm transition-all duration-100 cursor-pointer`}
-                              >
-                                {employee.first_name} {employee.middle_name}{" "}
-                                {employee.last_name}
-                              </div>
-                            ))}
-                        </div>
                       </div>
                     </div>
                   </div>

@@ -2,7 +2,7 @@ import { cloneElement, isValidElement } from "react";
 import { Squares2X2Icon } from "@heroicons/react/24/outline";
 
 // OVERVIEW COMPONENT
-export default function Overview({ overviewArr, onReset, resetActive = false }) {
+export default function Overview({ overviewArr, onReset }) {
   const renderIcon = (icon) => {
     if (isValidElement(icon)) {
       return cloneElement(icon, {

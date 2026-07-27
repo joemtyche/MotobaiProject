@@ -2,6 +2,7 @@ import { useState } from "react";
 import Logo from "../../../assets/Logo.png";
 import "../../pages.css";
 import Table from "../../DynamicComponents/DynamicTable";
+import SearchableDropdown from "../../DynamicComponents/SearchableDropdown";
 import api from "../../../api";
 import { PlusCircleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Swal from "sweetalert2";
@@ -194,24 +195,7 @@ const CreateDeliveryOrderForm = ({ confirmHandler }) => {
     }
   };
 
-  const validateInput = (field, options, fieldName) => {
-    // Normalize input and options for comparison
-    const inputValue = (form[field]?.trim() || "").toLowerCase();
-    const isValid = options.some(
-      (option) => option[fieldName].trim().toLowerCase() === inputValue
-    );
-
-    if (!isValid) {
-      setForm((prevForm) => ({
-        ...prevForm,
-        [field]: "",
-        [`${field}_id`]: null,
-      }));
-      alert(`Please input the correct ${fieldName.replace("_", " ")}`);
-    }
-  };
-
-  const handleRowDetails = (index) => {
+  const handleRowDetails = () => {
     Swal.fire({
       title: "Error",
       text: `kung ok lng delete sana dito`,
@@ -220,6 +204,105 @@ const CreateDeliveryOrderForm = ({ confirmHandler }) => {
   };
 
   const [searchInput, setSearchInput] = useState("");
+  const searchInputClassName = "text-lg p-2 min-w-[350px]";
+  const getProductName = (item) => item.product?.product_name || "";
+  const getAccountName = (item) => item.account || "";
+  const getEmployeeName = (employee) =>
+    [employee.first_name, employee.middle_name, employee.last_name]
+      .filter(Boolean)
+      .join(" ");
+  const findExactOption = (options, getLabel, value) =>
+    options.find(
+      (option) => getLabel(option).toLowerCase() === value.trim().toLowerCase()
+    );
+
+  const handleProductInputChange = (e) => {
+    const value = e.target.value;
+    const selectedProduct = findExactOption(productOptions, getProductName, value);
+
+    setForm((prevForm) => ({
+      ...prevForm,
+      product_name: value,
+      inventory_id: selectedProduct ? selectedProduct.id : null,
+      product_price: selectedProduct ? selectedProduct.product.price : null,
+      inventory_stock: selectedProduct ? selectedProduct.stock : null,
+      sku: selectedProduct ? selectedProduct.product.sku : "",
+    }));
+  };
+
+  const handleProductSelect = (item) => {
+    setForm((prevForm) => ({
+      ...prevForm,
+      product_name: getProductName(item),
+      product_price: item.product.price,
+      inventory_id: item.id,
+      inventory_stock: item.stock,
+      sku: item.product.sku,
+    }));
+  };
+
+  const handleAccountInputChange = (e) => {
+    const value = e.target.value;
+    const selectedOption = findExactOption(accountOptions, getAccountName, value);
+
+    setForm((prevForm) => ({
+      ...prevForm,
+      account: value,
+      account_id: selectedOption ? selectedOption.id : null,
+    }));
+    setSelectedAccount(selectedOption ? selectedOption.id : null);
+  };
+
+  const handleAccountSelect = (item) => {
+    setForm((prevForm) => ({
+      ...prevForm,
+      account: getAccountName(item),
+      account_id: item.id,
+    }));
+    setSelectedAccount(item.id);
+  };
+
+  const handleEmployeeInputChange = (e) => {
+    const value = e.target.value;
+    const selectedOption = findExactOption(employeeOptions, getEmployeeName, value);
+
+    setSearchInput(value);
+    setForm((prevForm) => ({
+      ...prevForm,
+      employee_name: value,
+      employee_id: selectedOption ? selectedOption.id : null,
+    }));
+    setSelectedEmployee(selectedOption ? selectedOption.id : null);
+  };
+
+  const handleEmployeeSelect = (employee) => {
+    const employeeName = getEmployeeName(employee);
+
+    setForm((prevForm) => ({
+      ...prevForm,
+      employee_name: employeeName,
+      employee_id: employee.id,
+    }));
+    setSelectedEmployee(employee.id);
+    setSearchInput(employeeName);
+  };
+
+  const validateSelectedOption = ({
+    value,
+    options,
+    getLabel,
+    message,
+    onInvalid,
+  }) => {
+    if (!value) {
+      return;
+    }
+
+    if (!findExactOption(options, getLabel, value)) {
+      alert(message);
+      onInvalid();
+    }
+  };
 
   return (
     <section>
@@ -245,86 +328,34 @@ const CreateDeliveryOrderForm = ({ confirmHandler }) => {
                   <label className="font-bold">Product</label>
                   <div className={`flex justify-center relative`}>
                     <div className={`border-2 rounded-md`}>
-                      <input
-                        autoComplete="off"
+                      <SearchableDropdown
                         placeholder="Search for Product"
-                        className="text-lg p-2 min-w-[350px]"
-                        type="text"
-                        onChange={(e) => {
-                          const selectedProduct = productOptions.find(
-                            (item) =>
-                              item.product.product_name.toLowerCase ===
-                              e.target.value.toLowerCase
-                          );
-
-                          onChangeHandler(e, "product_name", {
-                            inventory_id: selectedProduct
-                              ? selectedProduct.product.id
-                              : null,
-                            product_price: selectedProduct
-                              ? selectedProduct.product.price
-                              : null,
-                            inventory_stock: selectedProduct
-                              ? selectedProduct.stock
-                              : null,
-                            sku: selectedProduct
-                              ? selectedProduct.product.sku
-                              : null,
-                          });
-                        }}
+                        inputClassName={searchInputClassName}
+                        options={productOptions}
+                        getOptionLabel={getProductName}
+                        getOptionKey={(item) => item.id}
+                        onInputChange={handleProductInputChange}
+                        onSelect={handleProductSelect}
                         onBlur={() => {
-                          if (form.product_name) {
-                            validateInput(
-                              "product_name",
-                              productOptions.map((item) => ({
-                                product_name: item.product.product_name,
-                              })), // Flatten options to match the expected structure
-                              "product_name"
-                            );
-                          }
+                          validateSelectedOption({
+                            value: form.product_name,
+                            options: productOptions,
+                            getLabel: getProductName,
+                            message: "Please select a valid product.",
+                            onInvalid: () =>
+                              setForm((prevForm) => ({
+                                ...prevForm,
+                                product_name: "",
+                                product_price: null,
+                                inventory_id: null,
+                                inventory_stock: null,
+                                sku: "",
+                              })),
+                          });
                         }}
                         name="product_name"
                         value={form.product_name || ""}
                       />
-                      <div
-                        className={`flex flex-col absolute bg-gray-50 overflow-y-auto max-h-[180px] min-w-[450px] shadow-md rounded-md z-50`}
-                      >
-                        {productOptions
-                          .filter((item) => {
-                            const searchTerm = (
-                              form.product_name || ""
-                            ).toLowerCase();
-                            const fullName =
-                              item.product.product_name.toLowerCase();
-
-                            return (
-                              searchTerm &&
-                              fullName.startsWith(searchTerm) &&
-                              fullName !== searchTerm
-                            );
-                          })
-                          .map((item) => {
-                            return (
-                              <div
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() =>
-                                  setForm({
-                                    ...form,
-                                    product_name: item.product.product_name,
-                                    product_price: item.product.price,
-                                    inventory_id: item.product.id,
-                                    sku: item.product.id,
-                                  })
-                                }
-                                data-id={item.product.id}
-                                key={item.product.id}
-                                className={`hover:bg-red-700 hover:text-white p-4 rounded-sm transition-all duration-100 cursor-pointer`}
-                              >
-                                {item.product.product_name}
-                              </div>
-                            );
-                          })}
-                      </div>
                     </div>
                   </div>
                   {formArr.map(({ label, name, type, readOnly }, index) => (
@@ -384,72 +415,33 @@ const CreateDeliveryOrderForm = ({ confirmHandler }) => {
                       >
                         <div className={`flex justify-center relative`}>
                           <div className={`border-2 rounded-md`}>
-                            <input
+                            <SearchableDropdown
                               placeholder="Search for Account"
-                              autoComplete="off"
-                              className="text-lg p-2 min-w-[350px]"
-                              type="text"
-                              onChange={(e) =>
-                                onChangeHandler(e, "account", {
-                                  account_id:
-                                    accountOptions.find(
-                                      (item) =>
-                                        item.account.toLowerCase ===
-                                        e.target.value.toLowerCase
-                                    ) || null,
-                                })
-                              }
+                              inputClassName={searchInputClassName}
+                              options={accountOptions}
+                              getOptionLabel={getAccountName}
+                              getOptionKey={(item) => item.id}
+                              onInputChange={handleAccountInputChange}
+                              onSelect={handleAccountSelect}
                               onBlur={() => {
-                                if (form.account) {
-                                  validateInput(
-                                    "account",
-                                    accountOptions,
-                                    "account"
-                                  );
-                                }
+                                validateSelectedOption({
+                                  value: form.account,
+                                  options: accountOptions,
+                                  getLabel: getAccountName,
+                                  message: "Please select a valid account.",
+                                  onInvalid: () => {
+                                    setForm((prevForm) => ({
+                                      ...prevForm,
+                                      account: "",
+                                      account_id: null,
+                                    }));
+                                    setSelectedAccount(null);
+                                  },
+                                });
                               }}
                               name="account"
                               value={form.account || ""}
                             />
-                            <div
-                              className={`flex flex-col absolute bg-gray-50 overflow-y-auto max-h-[180px] min-w-[450px] shadow-md rounded-md z-50`}
-                            >
-                              {accountOptions
-                                .filter((item) => {
-                                  const searchTerm = (
-                                    form.account || ""
-                                  ).toLowerCase();
-                                  const fullName = item.account.toLowerCase();
-
-                                  return (
-                                    searchTerm &&
-                                    fullName.startsWith(searchTerm) &&
-                                    fullName !== searchTerm
-                                  );
-                                })
-                                .map((item) => {
-                                  return (
-                                    <div
-                                      onMouseDown={(e) => {
-                                        e.preventDefault();
-                                      }}
-                                      onClick={() => {
-                                        setForm({
-                                          ...form,
-                                          account: item.account,
-                                          account_id: item.id,
-                                        });
-                                        setSelectedAccount(item.id); // Update state
-                                      }}
-                                      data-id={item.id}
-                                      key={item.id}
-                                      className={`hover:bg-red-700 hover:text-white p-4 rounded-sm transition-all duration-100 cursor-pointer`}
-                                    >
-                                      {item.account}
-                                    </div>
-                                  );
-                                })}
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -459,94 +451,34 @@ const CreateDeliveryOrderForm = ({ confirmHandler }) => {
                       <label className="font-bold ">Employee</label>
                       <div className={`flex justify-center relative`}>
                         <div className={`border-2 rounded-md`}>
-                          <input
-                            autoComplete="off"
+                          <SearchableDropdown
                             placeholder="Search for Employee"
-                            className="text-lg p-2 min-w-[350px]"
-                            type="text"
-                            onChange={(e) => {
-                              setSearchInput(e.target.value); // Update the search input value
-                            }}
+                            inputClassName={searchInputClassName}
+                            options={employeeOptions}
+                            getOptionLabel={getEmployeeName}
+                            getOptionKey={(employee) => employee.id}
+                            onInputChange={handleEmployeeInputChange}
+                            onSelect={handleEmployeeSelect}
                             onBlur={() => {
-                              // Validate the input only if the user hasn't selected from the dropdown
-                              const matchedEmployee = employeeOptions.find(
-                                (employee) => {
-                                  const fullName = [
-                                    employee.first_name,
-                                    employee.middle_name,
-                                    employee.last_name,
-                                  ]
-                                    .join(" ")
-                                    .toLowerCase();
-                                  return fullName === searchInput.toLowerCase();
-                                }
-                              );
-
-                              if (!matchedEmployee) {
-                                alert("Please select a valid employee.");
-                                setSearchInput(""); // Reset input
-                                setForm({
-                                  ...form,
-                                  employee_name: "",
-                                  employee_id: null,
-                                });
-                                setSelectedEmployee(null);
-                              }
+                              validateSelectedOption({
+                                value: searchInput,
+                                options: employeeOptions,
+                                getLabel: getEmployeeName,
+                                message: "Please select a valid employee.",
+                                onInvalid: () => {
+                                  setSearchInput("");
+                                  setForm((prevForm) => ({
+                                    ...prevForm,
+                                    employee_name: "",
+                                    employee_id: null,
+                                  }));
+                                  setSelectedEmployee(null);
+                                },
+                              });
                             }}
                             name="employee_name"
-                            value={searchInput} // Bind to the search input state
+                            value={searchInput}
                           />
-                          <div
-                            className={`flex flex-col absolute bg-gray-50 overflow-y-auto max-h-[180px] min-w-[450px] shadow-md rounded-md z-50`}
-                          >
-                            {employeeOptions
-                              .filter((employee) => {
-                                const searchTerm = searchInput.toLowerCase();
-                                const fullName = [
-                                  employee.first_name,
-                                  employee.middle_name,
-                                  employee.last_name,
-                                ]
-                                  .join(" ")
-                                  .toLowerCase();
-
-                                return (
-                                  searchTerm &&
-                                  fullName.startsWith(searchTerm) &&
-                                  fullName !== searchTerm
-                                );
-                              })
-                              .map((employee) => (
-                                <div
-                                  key={employee.id}
-                                  onMouseDown={(e) => e.preventDefault()}
-                                  onClick={() => {
-                                    // Update the form when an option is clicked
-                                    setForm({
-                                      ...form,
-                                      employee_name: [
-                                        employee.first_name,
-                                        employee.middle_name,
-                                        employee.last_name,
-                                      ].join(" "),
-                                      employee_id: employee.id,
-                                    });
-                                    setSelectedEmployee(employee.id); // Update state
-                                    setSearchInput(
-                                      [
-                                        employee.first_name,
-                                        employee.middle_name,
-                                        employee.last_name,
-                                      ].join(" ")
-                                    ); // Set the input value to the selected employee
-                                  }}
-                                  className={`hover:bg-red-700 hover:text-white p-4 rounded-sm transition-all duration-100 cursor-pointer`}
-                                >
-                                  {employee.first_name} {employee.middle_name}{" "}
-                                  {employee.last_name}
-                                </div>
-                              ))}
-                          </div>
                         </div>
                       </div>
                     </div>

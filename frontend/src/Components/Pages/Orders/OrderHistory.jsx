@@ -209,7 +209,6 @@ export default function OrderHistory() {
           title={`Order History`}
           overviewArr={overviewArr}
           onReset={() => setHistoryFilter("all")}
-          resetActive={historyFilter === "all"}
         />
 
         <div className={`flex flex-col flex-1 m-4`}>

@@ -249,7 +249,6 @@ export default function Orders() {
           title={`Order Management`}
           overviewArr={overviewArr}
           onReset={() => setOrderFilter("all")}
-          resetActive={orderFilter === "all"}
         />
 
         <div className={`flex flex-col flex-1 m-4`}>
