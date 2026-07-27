@@ -9,6 +9,13 @@ export default function Inventory() {
   const [outBoundStockItem, setOutBoundStockItem] = useState([]);
   const { data: logs } = useFetchData("stockout");
   const [employee, setEmployee] = useState("");
+  const [reason, setReason] = useState("");
+
+  const getReasonText = (reason) => {
+    const trimmedReason = reason?.trim();
+
+    return trimmedReason || "N/A";
+  };
 
   //DISPLAY TEMPLATE ON <TABLE></TABLE>
   const tableColumns = [
@@ -37,6 +44,19 @@ export default function Inventory() {
       },
     },
     {
+      header: "Reason",
+      row: "reason",
+      customRender: (item) => {
+        const reasonText = getReasonText(item.reason);
+
+        return (
+          <p className="max-w-[260px] truncate" title={reasonText}>
+            {reasonText}
+          </p>
+        );
+      },
+    },
+    {
       header: "Date and Time Created",
       row: "date_created",
       customRender: (item) => {
@@ -62,6 +82,7 @@ export default function Inventory() {
     if (method == "Details") {
       setMethod("None");
       setDetailsRow(null);
+      setReason("");
     }
   };
 
@@ -77,6 +98,7 @@ export default function Inventory() {
         selectedLog.employee_lname,
       ].join(" ");
       setEmployee(employeeFullName);
+      setReason(getReasonText(selectedLog.reason));
       setDetailsRow(id);
       setMethod("Details");
       toggleModal();
@@ -112,6 +134,9 @@ export default function Inventory() {
         <DetailsStockModal
           logsData={outBoundStockItem}
           employeeData={employee}
+          reasonData={reason}
+          titleData="Stock-Out"
+          quantityHeader="Quantity Removed"
         />
       </DynamicModal>
     </section>

@@ -1,13 +1,14 @@
-import React, { useEffect } from "react";
 import Logo from "../../../assets/Logo.png";
 import Table from "../../DynamicComponents/DynamicTable";
-import Swal from "sweetalert2";
 
 const DetailsStockModal = ({
   logsData,
   supplierData,
   employeeData,
   referenceNumberData,
+  reasonData,
+  titleData = "Stock In",
+  quantityHeader = "Quantity Added",
 }) => {
   const tableColumns = [
     {
@@ -22,7 +23,7 @@ const DetailsStockModal = ({
     },
 
     {
-      header: "Quantity Added",
+      header: quantityHeader,
       customRender: (item) => {
         return <p>{item.quantity}</p>;
       },
@@ -44,12 +45,20 @@ const DetailsStockModal = ({
         </div>
 
         <div className={`bg-gray-100 p-12 pr-6 h-[75vh] w-[65vw] rounded-b-lg`}>
-          <div className="mb-6 flex gap-12 ">
-            <h1 className="text-2xl font-bold">Stock In</h1>
+          <div className="mb-6 flex min-h-[64px] gap-12">
+            <h1 className="shrink-0 text-2xl font-bold">{titleData}</h1>
             <div className="flex flex-col gap-2">
               <h1 className="text-md ">Employee</h1>
               <p className="text-lg font-bold">{employeeData}</p>
             </div>
+            {reasonData && (
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <h1 className="text-md ">Reason</h1>
+                <p className="h-7 truncate text-lg font-bold" title={reasonData}>
+                  {reasonData}
+                </p>
+              </div>
+            )}
             {referenceNumberData && (
               <>
                 <div className="flex flex-col gap-2">

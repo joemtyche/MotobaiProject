@@ -432,16 +432,6 @@ const StockInForm = ({ confirmHandler }) => {
                         />
                       </div>
                     </div>
-                    <div className="flex h-12 w-24 flex-col items-center justify-center rounded-md border-2 border-gray-200 bg-white px-3 shadow-sm">
-                      <span className="text-xs font-semibold uppercase text-gray-500">
-                        Stock
-                      </span>
-                      <span className="text-lg font-bold text-gray-800">
-                        {form.inventory_stock !== ""
-                          ? form.inventory_stock
-                          : "--"}
-                      </span>
-                    </div>
                     <label className="font-bold" htmlFor="quantity">
                       Quantity
                     </label>
@@ -485,7 +475,7 @@ const StockInForm = ({ confirmHandler }) => {
                     <div className="flex items-center gap-4 ml-4">
                       <input
                         className={`text-lg border-2 rounded py-2 px-4 focus:border-green-600 focus:ring-0 focus:outline-none shadow-sm`}
-                        type="number"
+                        type="text"
                         value={referenceNumber}
                         onChange={(e) => setReferenceNumber(e.target.value)}
                         required
