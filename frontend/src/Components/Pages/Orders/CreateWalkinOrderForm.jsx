@@ -10,6 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 import Swal from "sweetalert2";
 import {
+  getApiErrorText,
   getAvailableInventoryOptions,
   getNextOrderReferenceNumber,
 } from "../../Utils/formHelpers.js";
@@ -105,20 +106,14 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
         console.log("Order creation successful:", res.data);
         setInitialOrder([]);
       } catch (error) {
-        if (error.response) {
-          Swal.fire({
-            title: "Error!",
-            text:
-              error.response.data || "There was an issue creating the order.",
-            icon: "error",
-          });
-        } else {
-          Swal.fire({
-            title: "Error!",
-            text: "An unexpected error occurred. Please try again.",
-            icon: "error",
-          });
-        }
+        Swal.fire({
+          title: "Error!",
+          text: getApiErrorText(
+            error,
+            "There was an issue creating the order."
+          ),
+          icon: "error",
+        });
       }
     } else {
       showValidationError("Please add at least one product.");

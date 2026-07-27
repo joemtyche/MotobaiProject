@@ -10,7 +10,10 @@ import {
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useFetchData } from "../../Hooks/useFetchData.js";
-import { getAvailableInventoryOptions } from "../../Utils/formHelpers.js";
+import {
+  getApiErrorText,
+  getAvailableInventoryOptions,
+} from "../../Utils/formHelpers.js";
 import Swal from "sweetalert2";
 
 const StockInForm = ({ confirmHandler }) => {
@@ -27,6 +30,7 @@ const StockInForm = ({ confirmHandler }) => {
   const { data: productOptions } = useFetchData("inventory");
   const { data: supplierOptions } = useFetchData("supplier");
   const { data: employeeOptions } = useFetchData("employee");
+  const { data: stockInLogs } = useFetchData("stockin");
 
   const formArr = [
     {
@@ -138,6 +142,20 @@ const StockInForm = ({ confirmHandler }) => {
       return "Please enter a reference number.";
     }
 
+    const normalizedReferenceNumber = String(referenceNumber)
+      .trim()
+      .toLowerCase();
+    const referenceExists = stockInLogs.some(
+      (item) =>
+        String(item.reference_number || "")
+          .trim()
+          .toLowerCase() === normalizedReferenceNumber
+    );
+
+    if (referenceExists) {
+      return "Reference number already exists. Please use a different reference number.";
+    }
+
     if (!selectedSupplier) {
       return "Please select a supplier.";
     }
@@ -197,7 +215,7 @@ const StockInForm = ({ confirmHandler }) => {
             inboundStockItems: inboundStockItems,
             supplier: selectedSupplier, // replace SelectedSupplier or smth
             employee: selectedEmployee, // same here
-            reference_number: String(referenceNumber), // need inputvalidation, idk din kung ano actual input dito tho
+            reference_number: String(referenceNumber).trim(), // need inputvalidation, idk din kung ano actual input dito tho
           }
         );
 
@@ -215,20 +233,12 @@ const StockInForm = ({ confirmHandler }) => {
           });
         }
       } catch (error) {
-        console.error("Backend Error:", error.response.data);
-        if (error.response) {
-          Swal.fire({
-            title: "Error!",
-            text: error.response.data || "There was an issue stocking in.",
-            icon: "error",
-          });
-        } else {
-          Swal.fire({
-            title: "Error!",
-            text: "An unexpected error occurred. Please try again.",
-            icon: "error",
-          });
-        }
+        console.error("Backend Error:", error.response?.data || error);
+        Swal.fire({
+          title: "Error!",
+          text: getApiErrorText(error, "There was an issue stocking in."),
+          icon: "error",
+        });
       }
     } else {
       Swal.fire({

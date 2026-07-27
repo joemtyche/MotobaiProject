@@ -7,6 +7,7 @@ import api from "../../../api";
 import { PlusCircleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Swal from "sweetalert2";
 import {
+  getApiErrorText,
   getAvailableInventoryOptions,
   getNextOrderReferenceNumber,
 } from "../../Utils/formHelpers.js";
@@ -100,20 +101,14 @@ const CreateDeliveryOrderForm = ({ confirmHandler }) => {
         setInitialOrder([]);
       } catch (error) {
         console.log(error);
-        if (error.response) {
-          Swal.fire({
-            title: "Error!",
-            text:
-              error.response.data || "There was an issue creating the order.",
-            icon: "error",
-          });
-        } else {
-          Swal.fire({
-            title: "Error!",
-            text: "An unexpected error occurred. Please try again.",
-            icon: "error",
-          });
-        }
+        Swal.fire({
+          title: "Error!",
+          text: getApiErrorText(
+            error,
+            "There was an issue creating the order."
+          ),
+          icon: "error",
+        });
       }
     } else {
       showValidationError("Please add at least one product.");

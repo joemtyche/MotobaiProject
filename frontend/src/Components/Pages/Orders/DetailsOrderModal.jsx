@@ -4,6 +4,7 @@ import Table from "../../DynamicComponents/DynamicTable";
 import api from "../../../api";
 import Swal from "sweetalert2";
 import InvoicePDFButton from "./InvoicePDFButton";
+import { getApiErrorText } from "../../Utils/formHelpers.js";
 
 const DetailsOrderModal = ({ logsData, orderId }) => {
   const [orderDetails, setOrderDetails] = useState({});
@@ -33,10 +34,50 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
   const fetchOrderDetailItems = async (orderDetailId) => {
     try {
       const response = await api.get(`/api/orderdetails/view/${orderDetailId}/`);
-      setOrderDetailItems(response.data);
+      let inventoryStock = null;
+
+      if (response.data.inventory) {
+        try {
+          const inventoryResponse = await api.get(
+            `/api/inventory/view/${response.data.inventory}/`
+          );
+          inventoryStock = inventoryResponse.data.stock;
+        } catch (error) {
+          console.error("Error fetching inventory details:", error);
+        }
+      }
+
+      setOrderDetailItems({
+        ...response.data,
+        inventory_stock: inventoryStock,
+      });
     } catch (error) {
       console.error("Error fetching order details:", error);
     }
+  };
+
+  const getOrderQuantityError = (quantity, stock) => {
+    const quantityValue = Number(quantity);
+    const stockValue = Number(stock);
+
+    if (!quantity || Number.isNaN(quantityValue) || quantityValue <= 0) {
+      return "Quantity must be greater than 0.";
+    }
+
+    if (!Number.isInteger(quantityValue)) {
+      return "Quantity must be a whole number.";
+    }
+
+    if (
+      stock !== null &&
+      stock !== undefined &&
+      !Number.isNaN(stockValue) &&
+      quantityValue > stockValue
+    ) {
+      return `Quantity cannot be greater than current stock (${stockValue}).`;
+    }
+
+    return "";
   };
 
   const updateOrderDetail = async (
@@ -81,7 +122,10 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
       console.error("Error updating order details:", error);
       Swal.fire({
         title: "Error",
-        text: "Failed to update the backend. Please try again.",
+        text: getApiErrorText(
+          error,
+          "Failed to update the backend. Please try again."
+        ),
         icon: "error",
       });
       return false;
@@ -106,6 +150,13 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
     );
     const currentQuantity =
       existingEdit?.updated_quantity ?? orderDetailItems.quantity;
+    const hasInventoryStock =
+      orderDetailItems.inventory_stock !== null &&
+      orderDetailItems.inventory_stock !== undefined;
+    const stockText =
+      hasInventoryStock
+        ? `<p>Current stock: <strong>${orderDetailItems.inventory_stock}</strong></p>`
+        : "";
 
     Swal.fire({
       title: `Edit ${orderDetailItems.product_name}?`,
@@ -113,14 +164,10 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
       inputValue: currentQuantity,
       showCancelButton: true,
       confirmButtonText: "Update",
-      html: `<p>Current quantity: <strong>${orderDetailItems.quantity}</strong></p>`,
+      html: `<p>Current quantity: <strong>${orderDetailItems.quantity}</strong></p>${stockText}`,
       icon: "warning",
       inputValidator: (value) => {
-        const quantityValue = Number(value);
-
-        if (!value || Number.isNaN(quantityValue) || quantityValue <= 0) {
-          return "Quantity must be greater than 0.";
-        }
+        return getOrderQuantityError(value, orderDetailItems.inventory_stock);
       },
     }).then((result) => {
       if (!result.isConfirmed) {
@@ -133,6 +180,7 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
         inventory_id: orderDetailItems.inventory,
         product_name: orderDetailItems.product_name,
         product_price: orderDetailItems.product_price,
+        inventory_stock: orderDetailItems.inventory_stock,
         original_quantity: orderDetailItems.quantity,
         quantity_to_return: Math.max(
           orderDetailItems.quantity - updatedQuantity,
@@ -180,6 +228,13 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
     } else if (status === "received") {
       statusString = "Receive";
     } else if (status === "completed") {
+      if (isEditingOrder) {
+        showValidationError(
+          "Save or cancel order edits before completing the order."
+        );
+        return;
+      }
+
       if (referenceNumber === "") {
         Swal.fire({
           title: "Error",
@@ -275,9 +330,7 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
       console.log(error);
       Swal.fire({
         title: "Error!",
-        text:
-          error.response?.data?.detail ||
-          "There was an issue updating the order.",
+        text: getApiErrorText(error, "There was an issue updating the order."),
         icon: "error",
       });
     }
@@ -300,14 +353,15 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
       return "No order changes to save.";
     }
 
-    const invalidItem = pendingOrderEdits.find((item) => {
-      const quantityValue = Number(item.updated_quantity);
-
-      return Number.isNaN(quantityValue) || quantityValue <= 0;
-    });
+    const invalidItem = pendingOrderEdits.find((item) =>
+      Boolean(getOrderQuantityError(item.updated_quantity, item.inventory_stock))
+    );
 
     if (invalidItem) {
-      return `${invalidItem.product_name} must have a quantity greater than 0.`;
+      return `${invalidItem.product_name}: ${getOrderQuantityError(
+        invalidItem.updated_quantity,
+        invalidItem.inventory_stock
+      )}`;
     }
 
     return "";
@@ -776,6 +830,7 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
                         className={`text-green-800 border-green-800 hover:bg-green-800`}
                         onClick={() => onClickUpdateStatus("completed")}
                         buttonName={"Complete Order"}
+                        disabled={isEditingOrder}
                       ></OrderModalButton>
                       <OrderModalButton
                         className={`text-orange-500 border-orange-500`}
@@ -811,6 +866,7 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
                         className={`text-green-800 border-green-800 hover:bg-green-800`}
                         onClick={() => onClickUpdateStatus("completed")}
                         buttonName={"Complete Order"}
+                        disabled={isEditingOrder}
                       ></OrderModalButton>
                     </div>
                   </div>

@@ -36,3 +36,39 @@ export const getNextOrderReferenceNumber = (
     "0"
   )}`;
 };
+
+export const getApiErrorText = (
+  error,
+  fallback = "An unexpected error occurred. Please try again."
+) => {
+  const data = error?.response?.data;
+
+  if (!data) {
+    return fallback;
+  }
+
+  if (data.reference_number) {
+    return "Reference number already exists. Please use a different reference number.";
+  }
+
+  if (typeof data === "string") {
+    return data;
+  }
+
+  if (Array.isArray(data)) {
+    return data.join("\n");
+  }
+
+  if (typeof data === "object") {
+    const message = Object.entries(data)
+      .map(([field, messages]) => {
+        const text = Array.isArray(messages) ? messages.join(", ") : messages;
+        return `${field}: ${text}`;
+      })
+      .join("\n");
+
+    return message || fallback;
+  }
+
+  return fallback;
+};
