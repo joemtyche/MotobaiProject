@@ -307,14 +307,14 @@ export default function Accounts() {
                 </div>
               )}
             </div>
+            <Table
+              columnArr={tableColumns}
+              dataArr={account}
+              editRow={handleEditRow}
+              sortField="id"
+              sortDirection="asc"
+            />
           </div>
-          <Table
-            columnArr={tableColumns}
-            dataArr={account}
-            editRow={handleEditRow}
-            sortField="id"
-            sortDirection="asc"
-          />
         </div>
       </div>
     </section>

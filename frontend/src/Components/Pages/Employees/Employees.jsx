@@ -291,14 +291,14 @@ const Employees = () => {
                 </div>
               )}
             </div>
+            <Table
+              columnArr={tableColumns}
+              dataArr={employee}
+              editRow={handleEditRow}
+              sortField="id"
+              sortDirection="asc"
+            />
           </div>
-          <Table
-            columnArr={tableColumns}
-            dataArr={employee}
-            editRow={handleEditRow}
-            sortField="id"
-            sortDirection="asc"
-          />
         </div>
       </div>
     </section>

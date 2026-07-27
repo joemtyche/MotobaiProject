@@ -368,7 +368,7 @@ const CreateDeliveryOrderForm = ({ confirmHandler }) => {
                   <Table
                     columnArr={tableColumns}
                     dataArr={initialOrder}
-                    className={`!max-h-[40vh]`}
+                    className={`!h-[40vh] !max-h-[40vh]`}
                     editRow={handleRowDetails}
                     sortField={null}
                     sortDirection="asc"

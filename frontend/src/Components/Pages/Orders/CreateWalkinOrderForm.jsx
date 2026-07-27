@@ -396,7 +396,7 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
                   <Table
                     columnArr={tableColumns}
                     dataArr={initialOrder}
-                    className={`!max-h-[40vh]`}
+                    className={`!h-[40vh] !max-h-[40vh]`}
                     sortField={null}
                     sortDirection="asc"
                   />

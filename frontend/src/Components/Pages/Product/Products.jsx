@@ -230,14 +230,14 @@ export default function Products() {
                 icon={<ArrowDownTrayIcon className="size-5" />}
               />
             </DynamicModal>
+            <Table
+              columnArr={tableColumns}
+              dataArr={product}
+              editRow={handleEditRow}
+              sortField="product.id"
+              sortDirection="asc"
+            />
           </div>
-          <Table
-            columnArr={tableColumns}
-            dataArr={product}
-            editRow={handleEditRow}
-            sortField="product.id"
-            sortDirection="asc"
-          />
         </div>
       </div>
     </section>

@@ -55,6 +55,10 @@ tr:first-child th:last-child {
   border-radius: 4px;
 }
 
+.scrollbar-stable {
+  scrollbar-gutter: stable;
+}
+
 .inactive {
   display: none !important;
 }

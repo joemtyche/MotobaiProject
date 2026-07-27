@@ -68,6 +68,7 @@ const DetailsStockModal = ({
           <Table
             columnArr={tableColumns}
             dataArr={logsData}
+            className="!h-[52vh] !max-h-[52vh]"
             sortField={null}
             sortDirection="asc"
           ></Table>

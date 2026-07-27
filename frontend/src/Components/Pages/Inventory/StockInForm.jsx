@@ -335,7 +335,7 @@ const StockInForm = ({ confirmHandler }) => {
                   <Table
                     columnArr={tableColumns}
                     dataArr={initialStockIn}
-                    className={`!max-h-[40vh]`}
+                    className={`!h-[40vh] !max-h-[40vh]`}
                     sortField={null}
                     sortDirection="asc"
                   />

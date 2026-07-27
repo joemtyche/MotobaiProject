@@ -92,10 +92,10 @@ export default function Table({
   return (
     <section className={`h-full`}>
       <div
-        className={`overflow-y-auto shadow-shadowTable max-h-[72vh] mt-1 mr-6 rounded-lg ${className}`}
+        className={`mt-1 h-[74vh] max-h-[74vh] w-full overflow-auto rounded-lg bg-gray-50 shadow-shadowTable ${className}`}
       >
         <div>
-          <table className={`border-collapse min-w-full`}>
+          <table className={`w-full min-w-max border-collapse`}>
             <thead
               className={`bg-red-600 p-4 m-10 text-left text-white top-0 z-0 sticky`}
             >

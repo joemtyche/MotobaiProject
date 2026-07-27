@@ -243,14 +243,14 @@ const Suppliers = () => {
                 </div>
               )}
             </div>
+            <Table
+              columnArr={tableColumns}
+              dataArr={supplier}
+              editRow={handleEditRow}
+              sortField="id"
+              sortDirection="asc"
+            />
           </div>
-          <Table
-            columnArr={tableColumns}
-            dataArr={supplier}
-            editRow={handleEditRow}
-            sortField="id"
-            sortDirection="asc"
-          />
         </div>
       </div>
     </section>

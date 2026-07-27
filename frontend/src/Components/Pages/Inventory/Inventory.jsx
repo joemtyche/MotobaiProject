@@ -175,13 +175,13 @@ export default function Inventory() {
             >
               <StockOutForm />
             </DynamicModal>
+            <Table
+              columnArr={tableColumns}
+              dataArr={inventory}
+              sortField="inventory_status"
+              sortDirection="asc"
+            />
           </div>
-          <Table
-            columnArr={tableColumns}
-            dataArr={inventory}
-            sortField="inventory_status"
-            sortDirection="asc"
-          />
         </div>
       </div>
     </section>

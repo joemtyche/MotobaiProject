@@ -196,14 +196,14 @@ const WalkIn = () => {
                 icon={<UserPlusIcon className="size-5" />}
               />
             </DynamicModal>
+            <Table
+              columnArr={tableColumns}
+              dataArr={customer}
+              editRow={handleEditRow}
+              sortField="id"
+              sortDirection="asc"
+            />
           </div>
-          <Table
-            columnArr={tableColumns}
-            dataArr={customer}
-            editRow={handleEditRow}
-            sortField="id"
-            sortDirection="asc"
-          />
         </div>
         <div className="absolute z-20 top-20  left-1/2 transform -translate-x-1/2  ">
           {errorWindow && (

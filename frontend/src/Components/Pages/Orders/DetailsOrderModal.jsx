@@ -528,7 +528,7 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
                   ? (row) => handleRowDetails(row)
                   : null
               }
-              className={` !h-[380px] !w-[1000px]`}
+              className={`!h-[380px] !max-h-[380px] !w-[1000px]`}
               sortField="id"
               sortDirection="asc"
               allowSort={false}
