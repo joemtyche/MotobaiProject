@@ -1,12 +1,11 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Logo from "../../../assets/Logo.png";
 import Table from "../../DynamicComponents/DynamicTable";
 import SearchableDropdown from "../../DynamicComponents/SearchableDropdown";
 import api from "../../../api";
 import {
-  ChevronDownIcon,
   PlusCircleIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
@@ -15,8 +14,9 @@ import Swal from "sweetalert2";
 
 const StockOutForm = ({ confirmHandler }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [reason, setReason] = useState();
   const [initialStockOut, setInitialStockOut] = useState([]);
+  const [editingRowIndex, setEditingRowIndex] = useState(null);
+  const [editingQuantity, setEditingQuantity] = useState("");
 
   const { data: productOptions } = useFetchData("inventory");
   const { data: employeeOptions } = useFetchData("employee");
@@ -50,6 +50,7 @@ const StockOutForm = ({ confirmHandler }) => {
       product_name: "",
       supplier_name: "",
       sku: "",
+      inventory_stock: "",
     });
   };
   const [form, setForm] = useState(prepareForm(formArr));
@@ -65,36 +66,87 @@ const StockOutForm = ({ confirmHandler }) => {
     }));
   };
 
-  //SET FORM BACK TO OLD STATE
-  const onSubmitHandler = (e) => {
-    if (form && form.quantity && form.product_name) {
-      setInitialStockOut((prevStock) => {
-        // Check if a product with the same name already exists in the stock
-        const isDuplicate = prevStock.some(
-          (item) => item.product_name === form.product_name
-        );
+  const showValidationError = (text) => {
+    Swal.fire({
+      title: "Error!",
+      text,
+      icon: "warning",
+    });
+  };
 
-        if (isDuplicate) {
-          Swal.fire({
-            title: "Error",
-            text: `You added a duplicate ${form.product_name}`,
-            icon: "error",
-          });
-          return prevStock;
-        } else {
-          const updatedStock = [...prevStock, form];
-          setForm(initialForm); // Reset the form
-          console.log(updatedStock); // This will now correctly log the updated stock
-          return updatedStock; // Return updated state
-        }
-      });
+  const getQuantityError = (quantity, stock = form.inventory_stock) => {
+    const quantityValue = Number(quantity);
+    const stockValue = Number(stock);
+
+    if (!quantity || Number.isNaN(quantityValue) || quantityValue <= 0) {
+      return "Quantity must be greater than 0.";
     }
+
+    if (!Number.isNaN(stockValue) && quantityValue > stockValue) {
+      return `Quantity cannot be greater than current stock (${stockValue}).`;
+    }
+
+    return "";
+  };
+
+  const getAddProductError = () => {
+    if (!form.inventory_id || !form.product_name) {
+      return "Please select a valid product.";
+    }
+
+    const quantityError = getQuantityError(form.quantity);
+
+    if (quantityError) {
+      return quantityError;
+    }
+
+    if (
+      initialStockOut.some((item) => item.inventory_id === form.inventory_id)
+    ) {
+      return `You already added ${form.product_name}.`;
+    }
+
+    return "";
+  };
+
+  //SET FORM BACK TO OLD STATE
+  const onSubmitHandler = () => {
+    const error = getAddProductError();
+
+    if (error) {
+      showValidationError(error);
+      return;
+    }
+
+    setInitialStockOut((prevStock) => [
+      { ...form, quantity: String(form.quantity) },
+      ...prevStock,
+    ]);
+    setForm(initialForm);
   };
 
   // send data to database
+  const getConfirmError = () => {
+    if (initialStockOut.length === 0) {
+      return "Please add at least one product.";
+    }
+
+    if (!selectedEmployee) {
+      return "Please select an employee.";
+    }
+
+    return "";
+  };
+
   const confirmButton = async () => {
-    
-    const { value: reason } = await Swal.fire({
+    const error = getConfirmError();
+
+    if (error) {
+      showValidationError(error);
+      return;
+    }
+
+    const { value: reason, isConfirmed: isReasonConfirmed } = await Swal.fire({
       title: "Reason for stockout",
       input: "text",
       text: "Please input a reason for stockout.",
@@ -103,15 +155,14 @@ const StockOutForm = ({ confirmHandler }) => {
       confirmButtonColor: "#196e3a",
       cancelButtonColor: "#d33",
       confirmButtonText: "Yes, create order",
+      inputValidator: (value) => {
+        if (!value?.trim()) {
+          return "Reason cannot be empty.";
+        }
+      },
     });
-  
-    // If the user canceled or didn't provide a reason, exit
-    if (!reason) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Reason cannot be empty.",
-      });
+
+    if (!isReasonConfirmed) {
       return;
     }
   
@@ -130,7 +181,7 @@ const StockOutForm = ({ confirmHandler }) => {
     // If confirmed, proceed with the stock out process
     if (result.isConfirmed) {
       // Pass 'reason' to the createStockOut function or handle accordingly
-      createStockOut(reason);
+      createStockOut(reason.trim());
     }
   };
 
@@ -138,7 +189,7 @@ const StockOutForm = ({ confirmHandler }) => {
     if (initialStockOut.length > 0) {
       const outboundStockItems = initialStockOut.map((stockOutItem) => ({
         inventory: stockOutItem.inventory_id,
-        quantity: stockOutItem.quantity,
+        quantity: parseInt(stockOutItem.quantity, 10),
       }));
 
       console.log(outboundStockItems)
@@ -193,6 +244,8 @@ const StockOutForm = ({ confirmHandler }) => {
 
   const [searchInput, setSearchInput] = useState("");
   const searchInputClassName = "text-lg p-2 min-w-[350px]";
+  const compactInputClassName =
+    "h-12 w-24 text-center text-lg border-2 rounded py-2 px-3 focus:border-green-600 focus:ring-0 focus:outline-none shadow-sm";
   const getProductName = (item) => item.product?.product_name || "";
   const getEmployeeName = (employee) =>
     [employee.first_name, employee.middle_name, employee.last_name]
@@ -212,6 +265,7 @@ const StockOutForm = ({ confirmHandler }) => {
       product_name: value,
       inventory_id: selectedProduct ? selectedProduct.id : null,
       sku: selectedProduct ? selectedProduct.product.sku : "",
+      inventory_stock: selectedProduct ? selectedProduct.stock : "",
     }));
   };
 
@@ -221,6 +275,7 @@ const StockOutForm = ({ confirmHandler }) => {
       product_name: getProductName(item),
       inventory_id: item.id,
       sku: item.product.sku,
+      inventory_stock: item.stock,
     }));
   };
 
@@ -261,9 +316,54 @@ const StockOutForm = ({ confirmHandler }) => {
     }
 
     if (!findExactOption(options, getLabel, value)) {
-      alert(message);
+      showValidationError(message);
       onInvalid();
     }
+  };
+
+  const closeEditModal = () => {
+    setEditingRowIndex(null);
+    setEditingQuantity("");
+  };
+
+  const openEditModal = (index) => {
+    const selectedItem = initialStockOut[index];
+
+    if (!selectedItem) {
+      return;
+    }
+
+    setEditingRowIndex(index);
+    setEditingQuantity(selectedItem.quantity || "");
+  };
+
+  const updateRowQuantity = () => {
+    const selectedItem = initialStockOut[editingRowIndex];
+    const error = getQuantityError(
+      editingQuantity,
+      selectedItem?.inventory_stock
+    );
+
+    if (error) {
+      showValidationError(error);
+      return;
+    }
+
+    setInitialStockOut((prevStock) =>
+      prevStock.map((item, index) =>
+        index === editingRowIndex
+          ? { ...item, quantity: String(editingQuantity) }
+          : item
+      )
+    );
+    closeEditModal();
+  };
+
+  const deleteRow = () => {
+    setInitialStockOut((prevStock) =>
+      prevStock.filter((_, index) => index !== editingRowIndex)
+    );
+    closeEditModal();
   };
 
   return (
@@ -309,6 +409,7 @@ const StockOutForm = ({ confirmHandler }) => {
                                   product_name: "",
                                   inventory_id: null,
                                   sku: "",
+                                  inventory_stock: "",
                                 })),
                             });
                           }}
@@ -316,40 +417,35 @@ const StockOutForm = ({ confirmHandler }) => {
                           value={form.product_name || ""}
                         />
                       </div>
-                      <div>
-                        <ChevronDownIcon
-                          className={` size-4 h-full mr-2  absolute flex right-0 items-center justify-center`}
-                        />
-                      </div>
                     </div>
-                    {formArr.map(({ label, name, type, readOnly }, index) => (
-                      <div
-                        className={`flex flex-col justify-between`}
-                        key={index}
-                      >
-                        <input
-                          className={`text-lg border-2 rounded py-2 px-4 focus:border-green-600 focus:ring-0 focus:outline-none shadow-sm`}
-                          readOnly={readOnly}
-                          label={label}
-                          id={name}
-                          name={name}
-                          type={type}
-                          value={form[name] || ""}
-                          onChange={(e) => onChangeHandler(e, name)}
-                          min="1"
-                          required
-                        ></input>
-                        <label
-                          className={`absolute transition-all duration-100 ease-in  px-4 py-2 text-gray-600 label-line`}
-                          htmlFor={name}
-                        >
-                          {label}
-                        </label>
-                      </div>
-                    ))}
+                    <div className="flex h-12 w-24 flex-col items-center justify-center rounded-md border-2 border-gray-200 bg-white px-3 shadow-sm">
+                      <span className="text-xs font-semibold uppercase text-gray-500">
+                        Stock
+                      </span>
+                      <span className="text-lg font-bold text-gray-800">
+                        {form.inventory_stock !== ""
+                          ? form.inventory_stock
+                          : "--"}
+                      </span>
+                    </div>
+                    <label className="font-bold" htmlFor="quantity">
+                      Quantity
+                    </label>
+                    <div className="flex flex-col justify-between">
+                      <input
+                        className={compactInputClassName}
+                        id="quantity"
+                        name="quantity"
+                        type="number"
+                        value={form.quantity || ""}
+                        onChange={(e) => onChangeHandler(e, "quantity")}
+                        min="1"
+                        required
+                      />
+                    </div>
                     {/* CREATE ROW BUTTON */}
                     <button
-                      onClick={(e) => {
+                      onClick={() => {
                         onSubmitHandler();
                       }}
                       type="button"
@@ -363,13 +459,15 @@ const StockOutForm = ({ confirmHandler }) => {
                     columnArr={tableColumns}
                     dataArr={initialStockOut}
                     className={`!h-[40vh] !max-h-[40vh]`}
+                    editRow={openEditModal}
                     sortField={null}
                     sortDirection="asc"
+                    allowSort={false}
                   />
                 </div>
 
                 <div className={`gap-x-6 gap-y-8 flex flex-wrap `}>
-                  <div className={`flex gap-4 items-center mb-4`}>
+                  <div className={`flex w-full flex-wrap gap-4 items-center mb-4`}>
                     {/* EMPLOYEE SELECTION */}
                     <label className="font-bold ">Employee</label>
                     <div className={`flex justify-center relative`}>
@@ -387,7 +485,7 @@ const StockOutForm = ({ confirmHandler }) => {
                               value: searchInput,
                               options: employeeOptions,
                               getLabel: getEmployeeName,
-                              message: "Please select a valid employee.",
+                              message: "Select an employee from the dropdown list.",
                               onInvalid: () => {
                                 setSearchInput("");
                                 setForm((prevForm) => ({
@@ -404,27 +502,75 @@ const StockOutForm = ({ confirmHandler }) => {
                         />
                       </div>
                     </div>
-                  </div>
-                </div>
-                <div className={`flex justify-end gap-4 mt-12`}>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      {
+                    <button
+                      type="button"
+                      onClick={() => {
                         confirmButton();
-                      }
-                    }}
-                    className={` shadow-md bg-white border-2 border-red-700 rounded px-4 py-2 hover:bg-red-700 hover:text-white transition-all duration-100 flex gap-4 items-center `}
-                  >
-                    Confirm Stock-Out
-                    <CheckCircleIcon className={`size-6`} />
-                  </button>
+                      }}
+                      className={`ml-auto shadow-md bg-white border-2 border-red-700 rounded px-4 py-2 hover:bg-red-700 hover:text-white transition-all duration-100 flex gap-4 items-center `}
+                    >
+                      Confirm Stock-Out
+                      <CheckCircleIcon className={`size-6`} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </form>
           </div>
         </div>
       </div>
+      {editingRowIndex !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-[360px] rounded-lg bg-gray-100 p-8 shadow-2xl">
+            <h2 className="text-2xl font-bold">Update Quantity</h2>
+            <p className="mt-2 font-semibold text-gray-700">
+              {initialStockOut[editingRowIndex]?.product_name}
+            </p>
+            <p className="mt-1 text-sm font-semibold text-gray-500">
+              Current Stock: {initialStockOut[editingRowIndex]?.inventory_stock}
+            </p>
+            <div className="mt-6">
+              <label
+                className="font-bold text-gray-700"
+                htmlFor="stock-out-edit-quantity"
+              >
+                Quantity
+              </label>
+              <input
+                id="stock-out-edit-quantity"
+                className="mt-2 h-12 w-full rounded border-2 px-4 py-2 text-center text-lg shadow-sm focus:border-green-600 focus:outline-none focus:ring-0"
+                type="number"
+                min="1"
+                value={editingQuantity}
+                onChange={(e) => setEditingQuantity(e.target.value)}
+              />
+            </div>
+            <div className="mt-8 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="rounded border-2 border-gray-500 bg-white px-4 py-2 font-semibold text-gray-700 shadow-md transition-all duration-100 hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={updateRowQuantity}
+                className="rounded border-2 border-green-700 bg-white px-4 py-2 font-semibold text-green-700 shadow-md transition-all duration-100 hover:bg-green-700 hover:text-white"
+              >
+                Update
+              </button>
+              <button
+                type="button"
+                onClick={deleteRow}
+                className="rounded border-2 border-red-700 bg-white px-4 py-2 font-semibold text-red-700 shadow-md transition-all duration-100 hover:bg-red-700 hover:text-white"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
