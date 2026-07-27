@@ -3,6 +3,8 @@ import {
   ArrowPathIcon,
   CheckCircleIcon,
   ClipboardDocumentListIcon,
+  GiftIcon,
+  TruckIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
 import Table from "../../DynamicComponents/DynamicTable.jsx";
@@ -15,16 +17,22 @@ export default function OrderHistory() {
   const [orderDetails, setOrderDetails] = useState([]);
   const [orderId, setOrderId] = useState();
   const [historyFilter, setHistoryFilter] = useState("all");
+  const [historyTypeFilter, setHistoryTypeFilter] = useState("all");
   const { data: orders } = useFetchData("order");
 
   const historyStatuses = ["completed", "cancelled", "returned"];
   const order = orders.filter(
     (item) => historyStatuses.includes(item.order_tracking?.status)
   );
-  const filteredOrder =
-    historyFilter === "all"
-      ? order
-      : order.filter((item) => item.order_tracking?.status === historyFilter);
+  const filteredOrder = order.filter((item) => {
+    const matchesStatus =
+      historyFilter === "all" ||
+      item.order_tracking?.status === historyFilter;
+    const matchesOrderType =
+      historyTypeFilter === "all" || item.order_type === historyTypeFilter;
+
+    return matchesStatus && matchesOrderType;
+  });
 
   //DISPLAY TEMPLATE ON <TABLE></TABLE>
   const tableColumns = [
@@ -34,10 +42,17 @@ export default function OrderHistory() {
     },
 
     {
-      header: "Number of Products",
-      row: "order_details.length",
+      header: "Sales Reference #",
+      row: "reference_number",
       customRender: (item) => {
-        return <p>{item.order_details.length}</p>;
+        return <p>{item.reference_number || "N/A"}</p>;
+      },
+    },
+    {
+      header: "Bill Reference #",
+      row: "order_tracking.reference_number",
+      customRender: (item) => {
+        return <p>{item.order_tracking?.reference_number || "N/A"}</p>;
       },
     },
 
@@ -156,6 +171,8 @@ export default function OrderHistory() {
   let completedOrderCount = 0;
   let cancelledOrderCount = 0;
   let returnedOrderCount = 0;
+  let deliveryCount = 0;
+  let walkinCount = 0;
 
   const statusCount = order;
 
@@ -166,6 +183,12 @@ export default function OrderHistory() {
       cancelledOrderCount++;
     } else if (item.order_tracking.status === "returned") {
       returnedOrderCount++;
+    }
+
+    if (item.order_type === "Delivery") {
+      deliveryCount++;
+    } else if (item.order_type === "Walkin") {
+      walkinCount++;
     }
   });
   const overviewArr = [
@@ -200,6 +223,33 @@ export default function OrderHistory() {
       onClick: () => setHistoryFilter("returned"),
       active: historyFilter === "returned",
     },
+    {
+      type: "separator",
+      title: "Order Type",
+    },
+    {
+      title: "All Types",
+      quantity: `${order.length}`,
+      icon: <ClipboardDocumentListIcon />,
+      onClick: () => setHistoryTypeFilter("all"),
+      active: historyTypeFilter === "all",
+    },
+    {
+      title: "Delivery",
+      quantity: `${deliveryCount}`,
+      className: "!text-blue-300",
+      icon: <TruckIcon />,
+      onClick: () => setHistoryTypeFilter("Delivery"),
+      active: historyTypeFilter === "Delivery",
+    },
+    {
+      title: "Walk-In",
+      quantity: `${walkinCount}`,
+      className: "!text-amber-300",
+      icon: <GiftIcon />,
+      onClick: () => setHistoryTypeFilter("Walkin"),
+      active: historyTypeFilter === "Walkin",
+    },
   ];
 
   return (
@@ -208,7 +258,10 @@ export default function OrderHistory() {
         <Overview
           title={`Order History`}
           overviewArr={overviewArr}
-          onReset={() => setHistoryFilter("all")}
+          onReset={() => {
+            setHistoryFilter("all");
+            setHistoryTypeFilter("all");
+          }}
         />
 
         <div className={`flex flex-col flex-1 m-4`}>

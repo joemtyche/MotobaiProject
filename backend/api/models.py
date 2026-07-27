@@ -212,19 +212,6 @@ class OrderTracking(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        if self.pk:  # Ensure this is an update, not creation
-            previous_instance = OrderTracking.objects.get(pk=self.pk)
-
-            # Check stock only if the status is being changed to "validated" or "completed"
-            if self.status in ["validated"] and self.status != previous_instance.status: 
-                # dont let order type delivery go through here if its state is completed
-                for order_detail in self.order.order_details.all():
-                    inventory_item = order_detail.inventory
-                    quantity = order_detail.quantity
-
-                    if inventory_item.stock < quantity:
-                        raise ValidationError(f"Not enough stock for {inventory_item.product.product_name}. Available: {inventory_item.stock}, Requested: {quantity}")
-
         super(OrderTracking, self).save(*args, **kwargs)
 
 class Payment(models.Model):
@@ -238,13 +225,27 @@ class Payment(models.Model):
     # date_due = models.DateTimeField(null=True, blank=True)
     # date_paid = models.DateTimeField(null=True, blank=True)
 
+def stock_is_deducted_for_status(order, status):
+    order_type = (order.order_type or "").lower()
+
+    if order_type == "walkin":
+        return status == "completed"
+
+    return status in ["validated", "shipped", "received", "completed"]
+
 @receiver(pre_save, sender=OrderTracking)
 def validate_stock_before_status_change(sender, instance, **kwargs):
     if instance.pk:  # Ensure this is an update, not creation
         previous_instance = OrderTracking.objects.get(pk=instance.pk)
+        instance._previous_status = previous_instance.status
 
-        # Check stock only if the status is being changed to "validated" or "completed"
-        if instance.status in ["validated"] and instance.status != previous_instance.status:
+        was_stock_deducted = stock_is_deducted_for_status(
+            instance.order, previous_instance.status
+        )
+        will_deduct_stock = stock_is_deducted_for_status(instance.order, instance.status)
+
+        # Check stock only when entering a state that deducts stock.
+        if will_deduct_stock and not was_stock_deducted:
             order = instance.order
             for order_detail in order.order_details.all():
                 inventory_item = order_detail.inventory
@@ -260,8 +261,11 @@ def update_stock_based_on_status(sender, instance, created, **kwargs):
             return  # No need to process stock on creation
 
         order = instance.order
+        previous_status = getattr(instance, "_previous_status", None)
+        was_stock_deducted = stock_is_deducted_for_status(order, previous_status)
+        should_stock_be_deducted = stock_is_deducted_for_status(order, instance.status)
 
-        if instance.status == "validated":
+        if should_stock_be_deducted and not was_stock_deducted:
             for order_detail in order.order_details.all():
                 inventory_item = order_detail.inventory
                 quantity = order_detail.quantity
@@ -274,25 +278,9 @@ def update_stock_based_on_status(sender, instance, created, **kwargs):
 
                 inventory_item.stock -= quantity
                 inventory_item.save()
-            print(f"Stock reduced for order {order.id} as status changed to 'validated'.")
+            print(f"Stock reduced for order {order.id} as status changed to '{instance.status}'.")
 
-        elif instance.status == "completed" and order.order_type.lower() == "walkin":
-
-            for order_detail in order.order_details.all():
-                inventory_item = order_detail.inventory
-                quantity = order_detail.quantity
-
-                if inventory_item.stock < quantity:
-                    raise ValidationError(
-                        f"Not enough stock for {inventory_item.product.product_name}. "
-                        f"Available: {inventory_item.stock}, Requested: {quantity}"
-                    )
-
-                inventory_item.stock -= quantity
-                inventory_item.save()
-            print(f"Stock reduced for order {order.id} as status changed to 'completed'.")
-
-        elif instance.status == "cancelled" or instance.status == "returned":
+        elif instance.status in ["cancelled", "returned"] and was_stock_deducted:
             for order_detail in order.order_details.all():
                 inventory_item = order_detail.inventory
                 quantity = order_detail.quantity

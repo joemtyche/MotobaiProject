@@ -20,6 +20,7 @@ export default function Orders() {
   const [orderDetails, setOrderDetails] = useState([]);
   const [orderId, setOrderId] = useState();
   const [orderFilter, setOrderFilter] = useState("all");
+  const [orderTypeFilter, setOrderTypeFilter] = useState("all");
   const { data: orders, triggerRefresh } = useFetchData("order");
 
   const order = orders.filter(
@@ -28,10 +29,14 @@ export default function Orders() {
       item.order_tracking?.status !== "returned" &&
       item.order_tracking?.status !== "cancelled"
   );
-  const filteredOrder =
-    orderFilter === "all"
-      ? order
-      : order.filter((item) => item.order_tracking?.status === orderFilter);
+  const filteredOrder = order.filter((item) => {
+    const matchesStatus =
+      orderFilter === "all" || item.order_tracking?.status === orderFilter;
+    const matchesOrderType =
+      orderTypeFilter === "all" || item.order_type === orderTypeFilter;
+
+    return matchesStatus && matchesOrderType;
+  });
 
   const [createDeliveryModal, setCreateDeliveryModal] = useState(false);
   const [createWalkinModal, setCreateWalkinModal] = useState(false);
@@ -54,15 +59,8 @@ export default function Orders() {
     },
 
     {
-      header: "Reference #",
+      header: "Sales Reference #",
       row: "reference_number",
-    },
-    {
-      header: "Number of Products",
-      row: "order_details.length",
-      customRender: (item) => {
-        return <p>{item.order_details.length}</p>;
-      },
     },
 
     {
@@ -185,6 +183,8 @@ export default function Orders() {
   let validatedCount = 0;
   let shippedCount = 0;
   let receivedCount = 0;
+  let deliveryCount = 0;
+  let walkinCount = 0;
 
   const statusCount = order;
 
@@ -197,6 +197,12 @@ export default function Orders() {
       shippedCount++;
     } else if (item.order_tracking.status === "received") {
       receivedCount++;
+    }
+
+    if (item.order_type === "Delivery") {
+      deliveryCount++;
+    } else if (item.order_type === "Walkin") {
+      walkinCount++;
     }
   });
   // DISPLAY TEMPLATE ON <OVERVIEW></OVERVIEW>
@@ -240,6 +246,33 @@ export default function Orders() {
       onClick: () => setOrderFilter("received"),
       active: orderFilter === "received",
     },
+    {
+      type: "separator",
+      title: "Order Type",
+    },
+    {
+      title: "All Types",
+      quantity: `${order.length}`,
+      icon: <ShoppingCartIcon />,
+      onClick: () => setOrderTypeFilter("all"),
+      active: orderTypeFilter === "all",
+    },
+    {
+      title: "Delivery",
+      quantity: `${deliveryCount}`,
+      className: "!text-blue-300",
+      icon: <TruckIcon />,
+      onClick: () => setOrderTypeFilter("Delivery"),
+      active: orderTypeFilter === "Delivery",
+    },
+    {
+      title: "Walk-In",
+      quantity: `${walkinCount}`,
+      className: "!text-amber-300",
+      icon: <GiftIcon />,
+      onClick: () => setOrderTypeFilter("Walkin"),
+      active: orderTypeFilter === "Walkin",
+    },
   ];
 
   return (
@@ -248,7 +281,10 @@ export default function Orders() {
         <Overview
           title={`Order Management`}
           overviewArr={overviewArr}
-          onReset={() => setOrderFilter("all")}
+          onReset={() => {
+            setOrderFilter("all");
+            setOrderTypeFilter("all");
+          }}
         />
 
         <div className={`flex flex-col flex-1 m-4`}>
