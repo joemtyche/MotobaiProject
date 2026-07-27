@@ -9,23 +9,47 @@ import {
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import Swal from "sweetalert2";
+import {
+  getAvailableInventoryOptions,
+  getNextOrderReferenceNumber,
+} from "../../Utils/formHelpers.js";
 
 import { useFetchData } from "../../Hooks/useFetchData.js";
 
 const CreateWalkinOrderForm = ({ confirmHandler }) => {
   const [initialOrder, setInitialOrder] = useState([]);
+  const [editingRowIndex, setEditingRowIndex] = useState(null);
+  const [editingQuantity, setEditingQuantity] = useState("");
 
   const { data: productOptions } = useFetchData("inventory");
   const { data: employeeOptions } = useFetchData("employee");
+  const { data: orderOptions } = useFetchData("order");
 
-  const [referenceNumber, setReferenceNumber] = useState("");
   const [deduction, setDeduction] = useState("");
+  const referenceNumber = getNextOrderReferenceNumber(orderOptions, "WO");
+  const [customerName, setCustomerName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   // const { data: accountOptions } = useFetchData("account");
 
   // const [selectedAccount, setSelectedAccount] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
+  const showValidationError = (text) => {
+    Swal.fire({
+      title: "Error!",
+      text,
+      icon: "warning",
+    });
+  };
+
   const confirmButton = async () => {
+    const error = getConfirmError();
+
+    if (error) {
+      showValidationError(error);
+      return;
+    }
+
     Swal.fire({
       title: "Confirm Order Creation",
       text: "You are about to create a new order with the provided details. Please ensure all information is accurate before proceeding.",
@@ -43,23 +67,21 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
 
   const createOrder = async () => {
     const total_balance = totalPrice.toFixed(2);
+    const error = getConfirmError();
+
+    if (error) {
+      showValidationError(error);
+      return;
+    }
 
     if (initialOrder.length > 0) {
-      if (!selectedEmployee) {
-        Swal.fire({
-          title: "Error!",
-          text: `Please select an employee.`,
-          icon: "warning",
-        });
-        return;
-      }
       const orderItems = initialOrder.map((item) => ({
         inventory: parseInt(item.inventory_id, 10),
         quantity: parseInt(item.quantity, 10),
         product_price: parseFloat(item.product_price),
       }));
 
-      const deduction2 = parseFloat(deduction);
+      const deductions = deductionAmount;
 
       try {
         const res = await api.post("/api/order/create/", {
@@ -70,7 +92,7 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
           customer_name: customerName,
           phone_number: phoneNumber,
           reference_number: referenceNumber,
-          deduction: deduction2 || 0,
+          deductions: deductions || 0,
         });
         Swal.fire({
           title: "Order Successfully Created!",
@@ -99,11 +121,7 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
         }
       }
     } else {
-      Swal.fire({
-        title: "Error!",
-        text: `Please add at least one product`,
-        icon: "warning",
-      });
+      showValidationError("Please add at least one product.");
     }
   };
 
@@ -163,29 +181,162 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
     }
   };
 
-  let totalPrice = 0;
-  const allPrices = initialOrder;
+  const getQuantityError = (quantity, stock = form.inventory_stock) => {
+    const quantityValue = Number(quantity);
+    const stockValue = Number(stock);
 
-  allPrices.forEach((item) => {
-    totalPrice += item.product_price * item.quantity;
-  });
+    if (!quantity || Number.isNaN(quantityValue) || quantityValue <= 0) {
+      return "Quantity must be greater than 0.";
+    }
+
+    if (!Number.isNaN(stockValue) && quantityValue > stockValue) {
+      return `Quantity cannot be greater than current stock (${stockValue}).`;
+    }
+
+    return "";
+  };
+
+  const getAddProductError = () => {
+    if (!form.inventory_id || !form.product_name) {
+      return "Please select a valid product.";
+    }
+
+    const quantityError = getQuantityError(form.quantity);
+
+    if (quantityError) {
+      return quantityError;
+    }
+
+    if (initialOrder.some((item) => item.inventory_id === form.inventory_id)) {
+      return `You already added ${form.product_name}.`;
+    }
+
+    return "";
+  };
+
+  const subtotalPrice = initialOrder.reduce(
+    (total, item) => total + item.product_price * item.quantity,
+    0
+  );
+  const hasDeduction = String(deduction ?? "").trim() !== "";
+  const deductionValue = Number(deduction);
+  const deductionAmount =
+    hasDeduction && !Number.isNaN(deductionValue) && deductionValue > 0
+      ? deductionValue
+      : 0;
+  const totalPrice = Math.max(subtotalPrice - deductionAmount, 0);
+
+  const getDeductionError = () => {
+    if (!hasDeduction) {
+      return "";
+    }
+
+    if (Number.isNaN(deductionValue)) {
+      return "Deduction must be a valid number.";
+    }
+
+    if (deductionValue < 0) {
+      return "Deduction cannot be negative.";
+    }
+
+    if (deductionValue >= subtotalPrice) {
+      return "Deduction must be less than the subtotal.";
+    }
+
+    return "";
+  };
+
+  const getConfirmError = () => {
+    if (initialOrder.length === 0) {
+      return "Please add at least one product.";
+    }
+
+    const deductionError = getDeductionError();
+
+    if (deductionError) {
+      return deductionError;
+    }
+
+    if (!customerName.trim()) {
+      return "Please enter the customer name.";
+    }
+
+    if (!selectedEmployee) {
+      return "Select an employee from the dropdown list.";
+    }
+
+    return "";
+  };
 
   //SET FORM BACK TO OLD STATE
   const onSubmitHandler = () => {
-    delete form.employee_id;
+    const error = getAddProductError();
 
-    if (form.quantity && form.product_name) {
-      setInitialOrder((prevOrder) => {
-        const updatedOrder = [...prevOrder, form]; // Update order
-        setForm(initialForm); // Reset the form
-        console.log(updatedOrder); // This will now correctly log the updated order
-        return updatedOrder; // Return updated state
-      });
+    if (error) {
+      showValidationError(error);
+      return;
     }
+
+    setInitialOrder((prevOrder) => [
+      { ...form, quantity: String(form.quantity) },
+      ...prevOrder,
+    ]);
+    setForm(initialForm);
+  };
+
+  const closeEditModal = () => {
+    setEditingRowIndex(null);
+    setEditingQuantity("");
+  };
+
+  const openEditModal = (index) => {
+    const selectedItem = initialOrder[index];
+
+    if (!selectedItem) {
+      return;
+    }
+
+    setEditingRowIndex(index);
+    setEditingQuantity(selectedItem.quantity || "");
+  };
+
+  const updateRowQuantity = () => {
+    const selectedItem = initialOrder[editingRowIndex];
+    const error = getQuantityError(
+      editingQuantity,
+      selectedItem?.inventory_stock
+    );
+
+    if (error) {
+      showValidationError(error);
+      return;
+    }
+
+    setInitialOrder((prevOrder) =>
+      prevOrder.map((item, index) =>
+        index === editingRowIndex
+          ? { ...item, quantity: String(editingQuantity) }
+          : item
+      )
+    );
+    closeEditModal();
+  };
+
+  const deleteRow = () => {
+    setInitialOrder((prevOrder) =>
+      prevOrder.filter((_, index) => index !== editingRowIndex)
+    );
+    closeEditModal();
   };
 
   const [searchInput, setSearchInput] = useState("");
   const searchInputClassName = "text-lg p-2 min-w-[350px]";
+  const compactInputClassName =
+    "h-12 w-24 text-center text-lg border-2 rounded py-2 px-3 focus:border-green-600 focus:ring-0 focus:outline-none shadow-sm";
+  const availableProductOptions = getAvailableInventoryOptions(
+    productOptions,
+    initialOrder
+  );
   const getProductName = (item) => item.product?.product_name || "";
   const getEmployeeName = (employee) =>
     [employee.first_name, employee.middle_name, employee.last_name]
@@ -198,13 +349,18 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
 
   const handleProductInputChange = (e) => {
     const value = e.target.value;
-    const selectedProduct = findExactOption(productOptions, getProductName, value);
+    const selectedProduct = findExactOption(
+      availableProductOptions,
+      getProductName,
+      value
+    );
 
     setForm((prevForm) => ({
       ...prevForm,
       product_name: value,
       inventory_id: selectedProduct ? selectedProduct.id : null,
       product_price: selectedProduct ? selectedProduct.product.price : null,
+      inventory_stock: selectedProduct ? selectedProduct.stock : null,
       sku: selectedProduct ? selectedProduct.product.sku : "",
     }));
   };
@@ -215,13 +371,18 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
       product_name: getProductName(item),
       product_price: item.product.price,
       inventory_id: item.id,
+      inventory_stock: item.stock,
       sku: item.product.sku,
     }));
   };
 
   const handleEmployeeInputChange = (e) => {
     const value = e.target.value;
-    const selectedOption = findExactOption(employeeOptions, getEmployeeName, value);
+    const selectedOption = findExactOption(
+      employeeOptions,
+      getEmployeeName,
+      value
+    );
 
     setSearchInput(value);
     setForm((prevForm) => ({
@@ -256,15 +417,12 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
     }
 
     if (!findExactOption(options, getLabel, value)) {
-      alert(message);
+      showValidationError(message);
       onInvalid();
     }
   };
 
   // Walk In Profile
-  const [customerName, setCustomerName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-
   return (
     <section>
       <div>
@@ -327,8 +485,12 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
                   </div>
                 </div>
 
-                <div className={`ml-4 gap-x-6 gap-y-8 flex min-w-[40vw]`}>
-                  <h1 className="text-lg font-bold ml-4 mb-4">Product</h1>
+                <div
+                  className={`ml-4 flex min-w-[40vw] items-center gap-x-6 gap-y-8`}
+                >
+                  <label className="flex h-12 items-center font-bold">
+                    Product
+                  </label>
                   <div className={`flex justify-center relative gap-6`}>
                     <div className="flex items-center gap-4">
                       <div className={`flex justify-center relative`}>
@@ -336,7 +498,7 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
                           <SearchableDropdown
                             placeholder="Search for Product"
                             inputClassName={searchInputClassName}
-                            options={productOptions}
+                            options={availableProductOptions}
                             getOptionLabel={getProductName}
                             getOptionKey={(item) => item.id}
                             onInputChange={handleProductInputChange}
@@ -344,7 +506,7 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
                             onBlur={() => {
                               validateSelectedOption({
                                 value: form.product_name,
-                                options: productOptions,
+                                options: availableProductOptions,
                                 getLabel: getProductName,
                                 message: "Please select a valid product.",
                                 onInvalid: () =>
@@ -353,6 +515,7 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
                                     product_name: "",
                                     product_price: null,
                                     inventory_id: null,
+                                    inventory_stock: null,
                                     sku: "",
                                   })),
                               });
@@ -363,38 +526,43 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
                         </div>
                       </div>
                     </div>
-                    {formArr.map(({ label, name, type, readOnly }, index) => (
-                      <div
-                        className={`flex flex-col justify-between`}
-                        key={index}
-                      >
-                        <input
-                          className={`text-base border-2 rounded py-2 px-4 focus:border-green-600 focus:ring-0 focus:outline-none shadow-sm`}
-                          readOnly={readOnly}
-                          label={label}
-                          id={name}
-                          name={name}
-                          type={type}
-                          value={form[name] || ""}
-                          onChange={(e) => onChangeHandler(e, name)}
-                          min="1"
-                          required
-                        ></input>
-                        <label
-                          className={`absolute transition-all duration-100 ease-in  px-4 py-2 label-line text-gray-600 label-line`}
-                          htmlFor={name}
-                        >
-                          {label}
-                        </label>
-                      </div>
-                    ))}
+                    <div className="flex h-12 w-24 flex-col items-center justify-center rounded-md border-2 border-gray-200 bg-white px-3 shadow-sm">
+                      <span className="text-xs font-semibold uppercase text-gray-500">
+                        Stock
+                      </span>
+                      <span className="text-lg font-bold text-gray-800">
+                        {form.inventory_stock !== null &&
+                        form.inventory_stock !== undefined &&
+                        form.inventory_stock !== ""
+                          ? form.inventory_stock
+                          : "--"}
+                      </span>
+                    </div>
+                    <label
+                      className="flex h-12 items-center font-bold"
+                      htmlFor="walkin-quantity"
+                    >
+                      Quantity
+                    </label>
+                    <div className="flex flex-col justify-between">
+                      <input
+                        className={compactInputClassName}
+                        id="walkin-quantity"
+                        name="quantity"
+                        type="number"
+                        value={form.quantity || ""}
+                        onChange={(e) => onChangeHandler(e, "quantity")}
+                        min="1"
+                        required
+                      />
+                    </div>
                   </div>
                   {/* CREATE ROW BUTTON */}
                   <button
                     onClick={() => {
                       onSubmitHandler();
                     }}
-                    type="submit"
+                    type="button"
                     className={`shadow-md bg-white border-2 border-red-700 rounded px-4 py-2 hover:bg-red-700 hover:text-white transition-all duration-100 flex gap-4 items-center`}
                   >
                     Add Product to Order
@@ -406,8 +574,10 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
                     columnArr={tableColumns}
                     dataArr={initialOrder}
                     className={`!h-[40vh] !max-h-[40vh]`}
+                    editRow={openEditModal}
                     sortField={null}
                     sortDirection="asc"
+                    allowSort={false}
                   />
                 </div>
 
@@ -430,7 +600,7 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
                             value: searchInput,
                             options: employeeOptions,
                             getLabel: getEmployeeName,
-                            message: "Please select a valid employee.",
+                            message: "Select an employee from the dropdown list.",
                             onInvalid: () => {
                               setSearchInput("");
                               setForm((prevForm) => ({
@@ -447,27 +617,23 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
                       />
                     </div>
                   </div>
-                  <div className="flex">
-                    <input
-                      className={`text-lg border-2 rounded py-2 px-4 focus:border-green-600 focus:ring-0 focus:outline-none shadow-sm`}
-                      type="text"
-                      value={referenceNumber}
-                      onChange={(e) => setReferenceNumber(e.target.value)}
-                      required
-                      name="reference"
-                      id="reference"
-                    />
-
+                  <div className="flex flex-col gap-1">
                     <label
-                      htmlFor={"reference"}
-                      className={`text-base absolute transition-all duration-100 ease-in px-4 py-2 text-gray-600 label-line`}
+                      htmlFor={"walkin-reference"}
+                      className="text-sm font-semibold text-gray-600"
                     >
                       Reference #
                     </label>
+                    <div
+                      id="walkin-reference"
+                      className="flex h-12 min-w-[210px] items-center justify-center rounded border-2 border-gray-200 bg-white px-4 text-lg font-bold text-gray-700 shadow-sm"
+                    >
+                      {referenceNumber}
+                    </div>
                   </div>
                   <div className="flex">
                     <input
-                      className={`text-lg border-2 rounded py-2 px-4 focus:border-green-600 focus:ring-0 focus:outline-none shadow-sm`}
+                      className={`text-center text-lg border-2 rounded py-2 px-4 focus:border-green-600 focus:ring-0 focus:outline-none shadow-sm`}
                       type="text"
                       value={deduction}
                       onChange={(e) => setDeduction(e.target.value)}
@@ -484,11 +650,22 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
                     </label>
                   </div>
 
-                  <div className="auto">
+                  <div className="auto min-w-[220px] text-right">
+                    <p className="text-sm text-gray-600">
+                      Subtotal:{" "}
+                      <span className="font-semibold">
+                        {subtotalPrice.toFixed(2)}
+                      </span>
+                    </p>
+                    {deductionAmount > 0 && (
+                      <p className="text-sm font-semibold text-red-700">
+                        Deduction: -{deductionAmount.toFixed(2)}
+                      </p>
+                    )}
                     <span className=" text-xl">{`TOTAL PRICE: `}</span>
-                    <span className="text-2xl font-bold">{`${totalPrice.toFixed(
-                      2
-                    )}`}</span>
+                    <span className="text-2xl font-bold">
+                      {totalPrice.toFixed(2)}
+                    </span>
                   </div>
                 </div>
 
@@ -509,6 +686,58 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
           </div>
         </div>
       </div>
+      {editingRowIndex !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-[360px] rounded-lg bg-gray-100 p-8 shadow-2xl">
+            <h2 className="text-2xl font-bold">Update Quantity</h2>
+            <p className="mt-2 font-semibold text-gray-700">
+              {initialOrder[editingRowIndex]?.product_name}
+            </p>
+            <p className="mt-1 text-sm font-semibold text-gray-500">
+              Current Stock: {initialOrder[editingRowIndex]?.inventory_stock}
+            </p>
+            <div className="mt-6">
+              <label
+                className="font-bold text-gray-700"
+                htmlFor="walkin-edit-quantity"
+              >
+                Quantity
+              </label>
+              <input
+                id="walkin-edit-quantity"
+                className="mt-2 h-12 w-full rounded border-2 px-4 py-2 text-center text-lg shadow-sm focus:border-green-600 focus:outline-none focus:ring-0"
+                type="number"
+                min="1"
+                value={editingQuantity}
+                onChange={(e) => setEditingQuantity(e.target.value)}
+              />
+            </div>
+            <div className="mt-8 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="rounded border-2 border-gray-500 bg-white px-4 py-2 font-semibold text-gray-700 shadow-md transition-all duration-100 hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={updateRowQuantity}
+                className="rounded border-2 border-green-700 bg-white px-4 py-2 font-semibold text-green-700 shadow-md transition-all duration-100 hover:bg-green-700 hover:text-white"
+              >
+                Update
+              </button>
+              <button
+                type="button"
+                onClick={deleteRow}
+                className="rounded border-2 border-red-700 bg-white px-4 py-2 font-semibold text-red-700 shadow-md transition-all duration-100 hover:bg-red-700 hover:text-white"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

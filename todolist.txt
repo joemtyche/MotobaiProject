@@ -1,52 +1,64 @@
-BRANCH / WORKFLOW
-- This branch is local-backend only.
-- Any frontend-only/static-site work must happen in a separate branch.
+ACTIVE TODO / IMPORTANT RISKS
 
-PROJECT CONSTRAINTS
-- The app in this branch runs locally with React frontend + Django/MySQL backend.
-- Do not add frontend-only mode, backendless mode, or online backend deployment support here.
+ORDER + STOCK INTEGRITY
+- Fix OrderTracking stock mutation logic before relying on demo data.
+  - Stock validation exists in both OrderTracking.save() and a pre_save signal.
+  - Stock is mutated in post_save based only on current status, so repeated saves can deduct or return stock again.
+  - Cancelling an unvalidated order can add stock back even though stock was never deducted.
+  - Editing order details calls order.order_tracking.save(), which can accidentally trigger stock logic.
+- Confirm the correct stock behavior for every transition:
+  - Delivery: unvalidated -> validated should deduct stock once.
+  - Delivery: validated -> shipped -> received -> completed should not deduct again.
+  - Walk-in: unvalidated -> completed should deduct stock once.
+  - Cancelled / returned should only return stock if stock was previously deducted.
 
-BIG FINDINGS / PRIORITY FIXES
-- Order stock logic is risky:
-  - OrderTracking can deduct stock on save while status is already validated.
-  - Some serializer updates call order.order_tracking.save(), which can trigger extra stock changes.
-- OrderDetails.save() appears broken:
-  - It looks up OrderTracking by OrderDetails primary key.
-  - It references self.status even though OrderDetails has no status field.
-- Walk-in order deductions are likely ignored:
-  - Frontend sends deduction.
-  - Backend reads deductions.
-- There are no meaningful backend tests yet.
-- Admin models are not registered, so Django admin is not useful for inspecting app data.
-- If a frontend-only static build is needed, make it in a separate branch.
+ORDER DETAILS / RETURN FLOW
+- Fix or temporarily remove Return Order in the order details modal.
+  - returnItems is declared but no longer populated by the current edit flow.
+  - Return Order updates order details only; it does not reliably move the order to returned status.
+  - Frontend references date_returned, but the backend OrderTracking model has no date_returned field.
+- Verify order tracking update uses the OrderTracking id, not the Order id.
+  - Current frontend endpoint uses /api/ordertracking/update/${orderId}/.
+  - Backend route expects the OrderTracking primary key.
 
-DATA / LOCAL SETUP
-- Use defaultdata/motobai_seed_local.sql instead of the original raw dump.
-- Avoid importing django_migrations, django_content_type, and auth_permission from old dumps.
-- Use backend/requirements.txt for local MySQL/MariaDB setup.
-- Avoid Python 3.14 for backend local setup; use Python 3.11 or 3.12.
+REFERENCE NUMBERS
+- Move generated Delivery / Walk-in order reference numbers to the backend, or add backend retry handling.
+  - Current frontend generation depends on the currently fetched order list.
+  - Stale order data or two quick creates can create duplicate references.
+- Keep Stock-in reference number manually editable.
+- Keep Payment Reference # behavior separate from sales/order reference numbers.
 
-RECENTLY ADDRESSED
-- Polished DynamicTable sorting:
-  - Header cells now trigger sorting across the full cell.
-  - Tables without edit handlers no longer call missing editRow callbacks.
-  - Temporary rows without backend ids now fall back to their row index for keys/actions.
-- Updated default table ordering:
-  - Accounts, employees, walk-in customers, products, and suppliers default to ID order.
-  - Inventory defaults to low stock, active, then inactive, with SKU ordering inside each group.
-- Refined table columns and sorting:
-  - Sort arrows now reserve fixed header space so clicking a header does not resize the table.
-  - Inventory table no longer shows product description.
-  - Products table now shows description immediately after product name.
-  - Order Management and Order History can sort by order type and status.
-- Re-enabled login/register for local frontend use.
-- Added default frontend API URL fallback to http://127.0.0.1:8000.
-- Fixed frontend refresh token endpoint to /api/token/refresh/.
-- Made backend/requirements.txt local-only.
-- Moved Django secret, debug, allowed hosts, CORS origins, and database connection settings to backend/.env.
-- Restricted API data endpoints to authenticated users; registration and JWT token routes remain public.
-- Moved frontend auth tokens from persistent localStorage to sessionStorage.
-- Replaced live hardcoded frontend backend URLs with shared api wrapper routes.
-- Removed dead commented frontend handlers that referenced hardcoded backend URLs.
-- Added safer local SQL seed file.
-- Updated README with CLI seed import instructions.
+FRONTEND FORM + TABLE CLEANUP
+- Fix DynamicForm submit behavior.
+  - Pressing Enter in a form can call the parent handler with a browser event instead of the form object.
+  - The submit button currently works through a manual wrapper, but the form onSubmit is unsafe.
+- Clean up DynamicForm floating labels so text boxes do not jiggle or overlap.
+- Keep temporary product-list tables unsortable unless rows get stable local ids.
+  - DynamicTable falls back to row index when an item has no backend id.
+  - Sorting temporary rows by index can make row-click edits target the wrong item.
+- Replace page reloads after create/update/delete/status actions with refetch or local state updates.
+
+LINT / PRODUCTION CLEANUP
+- Fix the real lint/runtime issues first.
+  - WalkIn.jsx references an undefined callback after submit.
+- Remove dev console.log/debug output from frontend and backend.
+- Replace browser alert() session-expired messages with the app's modal/notification style.
+- Decide whether to add prop-types or disable react/prop-types consistently.
+- Fix Tailwind config warnings.
+  - boxShadow values currently include trailing semicolons.
+  - tailwind.config.js is an ES module but uses require().
+
+DEPENDENCIES / CONFIG
+- Run npm audit fix carefully and rebuild.
+  - Current audit reports axios/form-data/react-router-related vulnerabilities.
+- Keep this branch as local React + Django/MySQL.
+  - Do not add backendless mode, frontend-only mode, or online backend deployment support here.
+- Use backend/.venv or Python 3.11/3.12 for backend work.
+  - Global Python 3.14 is not the intended backend setup.
+- Register main backend models in Django admin for easier local data inspection.
+
+CHECK STATUS
+- Frontend build passes with warnings.
+- Django manage.py check passes through backend/.venv.
+- makemigrations --check --dry-run reports no model changes.
+- Backend test suite currently has 0 tests.

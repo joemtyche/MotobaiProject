@@ -195,23 +195,6 @@ class OrderDetails(models.Model):
             self.product_price = self.inventory.product.price
             self.sku_hold = self.inventory.product.sku
 
-        if self.pk:  # Ensure this is an update, not creation
-            previous_instance = OrderTracking.objects.get(pk=self.pk)
-            
-            if (self.status == "validated" or 
-                (self.status == "completed" and self.order.order_type.lower() == "Walkin")) and self.status != previous_instance.status:
-                
-                for order_detail in self.order.order_details.all():
-                    inventory_item = order_detail.inventory
-                    quantity = order_detail.quantity
-
-                    if inventory_item.stock < quantity:
-                        raise ValidationError(
-                            f"Not enough stock for {inventory_item.product.product_name}. "
-                            f"Available: {inventory_item.stock}, Requested: {quantity}"
-                        )
-
-        
         super(OrderDetails, self).save(*args, **kwargs)
 
 class OrderTracking(models.Model):
@@ -324,4 +307,3 @@ def update_stock_based_on_status(sender, instance, created, **kwargs):
         instance.status = previous_status
         instance.save(update_fields=["status"])
         raise e
-

@@ -10,6 +10,7 @@ import {
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useFetchData } from "../../Hooks/useFetchData.js";
+import { getAvailableInventoryOptions } from "../../Utils/formHelpers.js";
 import Swal from "sweetalert2";
 
 const StockOutForm = ({ confirmHandler }) => {
@@ -246,6 +247,10 @@ const StockOutForm = ({ confirmHandler }) => {
   const searchInputClassName = "text-lg p-2 min-w-[350px]";
   const compactInputClassName =
     "h-12 w-24 text-center text-lg border-2 rounded py-2 px-3 focus:border-green-600 focus:ring-0 focus:outline-none shadow-sm";
+  const availableProductOptions = getAvailableInventoryOptions(
+    productOptions,
+    initialStockOut
+  );
   const getProductName = (item) => item.product?.product_name || "";
   const getEmployeeName = (employee) =>
     [employee.first_name, employee.middle_name, employee.last_name]
@@ -258,7 +263,11 @@ const StockOutForm = ({ confirmHandler }) => {
 
   const handleProductInputChange = (e) => {
     const value = e.target.value;
-    const selectedProduct = findExactOption(productOptions, getProductName, value);
+    const selectedProduct = findExactOption(
+      availableProductOptions,
+      getProductName,
+      value
+    );
 
     setForm((prevForm) => ({
       ...prevForm,
@@ -386,13 +395,15 @@ const StockOutForm = ({ confirmHandler }) => {
                 <h1 className="font-bold text-2xl mb-10">Stock Out</h1>
                 <div className="mb-12 ml-4 h-[45vh] md:h-[40vh] sm:h-[20vh] overflow-y-hidden">
                   <div className="flex items-center gap-4">
-                    <label className="font-bold">Product</label>
+                    <label className="flex h-12 items-center font-bold">
+                      Product
+                    </label>
                     <div className={`flex justify-center relative`}>
                       <div className={`border-2 rounded-md`}>
                         <SearchableDropdown
                           placeholder="Search for Product"
                           inputClassName={searchInputClassName}
-                          options={productOptions}
+                          options={availableProductOptions}
                           getOptionLabel={getProductName}
                           getOptionKey={(item) => item.id}
                           onInputChange={handleProductInputChange}
@@ -400,7 +411,7 @@ const StockOutForm = ({ confirmHandler }) => {
                           onBlur={() => {
                             validateSelectedOption({
                               value: form.product_name,
-                              options: productOptions,
+                              options: availableProductOptions,
                               getLabel: getProductName,
                               message: "Please select a valid product.",
                               onInvalid: () =>
@@ -428,7 +439,10 @@ const StockOutForm = ({ confirmHandler }) => {
                           : "--"}
                       </span>
                     </div>
-                    <label className="font-bold" htmlFor="quantity">
+                    <label
+                      className="flex h-12 items-center font-bold"
+                      htmlFor="quantity"
+                    >
                       Quantity
                     </label>
                     <div className="flex flex-col justify-between">

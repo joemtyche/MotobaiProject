@@ -10,6 +10,16 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
   const [orderDetailItems, setOrderDetailItems] = useState(null);
   const [returnItems, setReturnItems] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
+  const [isEditingOrder, setIsEditingOrder] = useState(false);
+  const [pendingOrderEdits, setPendingOrderEdits] = useState([]);
+
+  const showValidationError = (text) => {
+    Swal.fire({
+      title: "Error!",
+      text,
+      icon: "warning",
+    });
+  };
 
   const fetchOrderDetail = async (orderId) => {
     try {
@@ -29,49 +39,44 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
     }
   };
 
-  const updateOrderDetail = async (returnItems) => {
+  const updateOrderDetail = async (
+    items,
+    {
+      successTitle = "Order Updated",
+      successText = "The order has been updated successfully.",
+    } = {}
+  ) => {
+    if (items.length === 0) {
+      showValidationError("No order changes to save.");
+      return false;
+    }
+
     try {
-      // Log the current returnItems to check what is being sent
-      console.log("Updated Return Items: ", returnItems);
-
-      // Loop through each item in returnItems
-      for (const item of returnItems) {
+      for (const item of items) {
         const url = `/api/orderdetails/update/${item.order_detail_id}/`;
-
         const formData = {
-          order_detail_id: item.order_detail_id,
           inventory: item.inventory_id,
           product_name: item.product_name,
-          original_quantity: item.original_quantity,
-          quantity_to_return: item.quantity_to_return,
-          quantity: item.updated_quantity, // ensure the updated quantity is correct here
+          product_price: item.product_price,
+          quantity: item.updated_quantity,
         };
 
-        // Send the PUT request
         const res = await api.put(url, formData);
 
-        // Check the response
-        if (res.status === 200) {
-          Swal.fire({
-            title: "Return Success",
-            text: `Order updated successfully!`,
-            icon: "success",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              location.reload(); // You might want to use this cautiously (could be optimized later)
-            }
-          });
-        } else {
-          Swal.fire({
-            title: "Error",
-            text: `Failed to update Order. Please try again.`,
-            icon: "error",
-          });
+        if (res.status !== 200) {
+          throw new Error("Failed to update order detail.");
         }
       }
 
-      // Fetch updated order details (optional)
-      fetchOrderDetail(orderId);
+      await fetchOrderDetail(orderId);
+      Swal.fire({
+        title: successTitle,
+        text: successText,
+        icon: "success",
+      }).then(() => {
+        location.reload();
+      });
+      return true;
     } catch (error) {
       console.error("Error updating order details:", error);
       Swal.fire({
@@ -79,98 +84,90 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
         text: "Failed to update the backend. Please try again.",
         icon: "error",
       });
+      return false;
     }
   };
 
   const handleRowDetails = async (id) => {
+    if (!isEditingOrder) {
+      return;
+    }
+
     await fetchOrderDetailItems(id);
   };
 
   useEffect(() => {
-    if (!orderDetailItems || !orderDetailItems.id) {
+    if (!orderDetailItems?.id || !isEditingOrder) {
       return;
     }
 
-    if (selectedRows.includes(orderDetailItems.id)) {
-      Swal.fire({
-        title: "This row has already been selected.",
-        text: "You can't select the same row again.",
-        icon: "info",
-      });
-      return;
-    }
+    const existingEdit = pendingOrderEdits.find(
+      (item) => item.order_detail_id === orderDetailItems.id
+    );
+    const currentQuantity =
+      existingEdit?.updated_quantity ?? orderDetailItems.quantity;
 
-    if (orderDetailItems) {
-      Swal.fire({
-        title: `Edit ${orderDetailItems.product_name}?`,
-        input: "number",
-        showCancelButton: true,
-        confirmButtonText: "Confirm",
-        text: `Current quantity: ${orderDetailItems.quantity}`,
-        icon: "warning",
-      }).then(async (result) => {
-        if (result.isConfirmed) {
-          const quantityToReturn = parseInt(result.value, 10);
+    Swal.fire({
+      title: `Edit ${orderDetailItems.product_name}?`,
+      input: "number",
+      inputValue: currentQuantity,
+      showCancelButton: true,
+      confirmButtonText: "Update",
+      html: `<p>Current quantity: <strong>${orderDetailItems.quantity}</strong></p>`,
+      icon: "warning",
+      inputValidator: (value) => {
+        const quantityValue = Number(value);
 
-          if (
-            quantityToReturn > 0 &&
-            quantityToReturn <= orderDetailItems.quantity
-          ) {
-            const updatedQuantity =
-              orderDetailItems.quantity - quantityToReturn;
-
-            // Create a new return item object
-            const newReturnItem = {
-              order_detail_id: orderDetailItems.id,
-              inventory_id: orderDetailItems.inventory,
-              product_name: orderDetailItems.product_name,
-              original_quantity: orderDetailItems.quantity,
-              quantity_to_return: quantityToReturn,
-              updated_quantity: updatedQuantity,
-            };
-
-            // Only then add to the returnItems state
-            setReturnItems((prevItems) => {
-              const itemIndex = prevItems.findIndex(
-                (item) => item.order_detail_id === orderDetailItems.id
-              );
-
-              if (itemIndex > -1) {
-                // Update the existing item
-                const updatedItems = [...prevItems];
-                updatedItems[itemIndex] = {
-                  ...updatedItems[itemIndex],
-                  quantity_to_return: updatedQuantity,
-                  updated_quantity: updatedQuantity,
-                };
-                return updatedItems;
-              } else {
-                // Add a new item if it doesn't exist
-                return [...prevItems, newReturnItem];
-              }
-            });
-
-            // Mark this row as selected
-            setSelectedRows((prev) => [...prev, orderDetailItems.id]);
-            Swal.fire({
-              title: `Update Success`,
-              text: `Returning ${quantityToReturn} of ${orderDetailItems.product_name}, please confirm to update!`,
-              icon: "success",
-            });
-          } else {
-            Swal.fire({
-              title: "Invalid quantity",
-              text: "The quantity entered is invalid. Please try again.",
-              icon: "error",
-            });
-          }
+        if (!value || Number.isNaN(quantityValue) || quantityValue <= 0) {
+          return "Quantity must be greater than 0.";
         }
+      },
+    }).then((result) => {
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      const updatedQuantity = parseInt(result.value, 10);
+      const updatedItem = {
+        order_detail_id: orderDetailItems.id,
+        inventory_id: orderDetailItems.inventory,
+        product_name: orderDetailItems.product_name,
+        product_price: orderDetailItems.product_price,
+        original_quantity: orderDetailItems.quantity,
+        quantity_to_return: Math.max(
+          orderDetailItems.quantity - updatedQuantity,
+          0
+        ),
+        updated_quantity: updatedQuantity,
+      };
+
+      setPendingOrderEdits((prevItems) => {
+        const itemIndex = prevItems.findIndex(
+          (item) => item.order_detail_id === orderDetailItems.id
+        );
+
+        if (itemIndex > -1) {
+          const updatedItems = [...prevItems];
+          updatedItems[itemIndex] = updatedItem;
+          return updatedItems;
+        }
+
+        return [...prevItems, updatedItem];
       });
-    }
-  }, [orderDetailItems]);
+
+      Swal.fire({
+        title: "Item Updated",
+        text: `${orderDetailItems.product_name} is ready to save.`,
+        icon: "success",
+      });
+    });
+  }, [orderDetailItems, isEditingOrder]);
 
   useEffect(() => {
     console.log("Order ID in modal:", orderId); // Log Order ID when modal is opened
+    setIsEditingOrder(false);
+    setPendingOrderEdits([]);
+    setOrderDetailItems(null);
     fetchOrderDetail(orderId);
   }, [orderId]);
 
@@ -286,6 +283,62 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
     }
   };
 
+  const startEditOrder = () => {
+    setPendingOrderEdits([]);
+    setOrderDetailItems(null);
+    setIsEditingOrder(true);
+  };
+
+  const cancelEditOrder = () => {
+    setPendingOrderEdits([]);
+    setOrderDetailItems(null);
+    setIsEditingOrder(false);
+  };
+
+  const getPendingOrderEditError = () => {
+    if (pendingOrderEdits.length === 0) {
+      return "No order changes to save.";
+    }
+
+    const invalidItem = pendingOrderEdits.find((item) => {
+      const quantityValue = Number(item.updated_quantity);
+
+      return Number.isNaN(quantityValue) || quantityValue <= 0;
+    });
+
+    if (invalidItem) {
+      return `${invalidItem.product_name} must have a quantity greater than 0.`;
+    }
+
+    return "";
+  };
+
+  const saveOrderEdits = () => {
+    const error = getPendingOrderEditError();
+
+    if (error) {
+      showValidationError(error);
+      return;
+    }
+
+    Swal.fire({
+      title: "Save Order Changes?",
+      text: "This will update the edited order item quantities.",
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Save Order",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        updateOrderDetail(pendingOrderEdits, {
+          successTitle: "Order Saved",
+          successText: "The edited order quantities have been saved.",
+        });
+      }
+    });
+  };
+
   const tableColumns = [
     {
       header: "SKU",
@@ -333,6 +386,8 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
   const orderInitialBalance = orderDetails?.payment?.initial_balance;
   const orderType = orderDetails?.order_type;
   const orderPaymentRefNum = orderDetails?.order_tracking?.reference_number;
+  const isOrderTableEditable =
+    orderTrackingStatus === "unvalidated" && isEditingOrder;
 
   const dateCreated = pdfDateSet("date_created");
   const dateValidated = pdfDateSet("date_validated");
@@ -356,13 +411,20 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
   //PDF things
 
   // REUSABLE BUTTON
-  function OrderModalButton({ onClick, buttonName, className }) {
+  function OrderModalButton({ onClick, buttonName, className, disabled }) {
     return (
-      <div
-        className={`${className} shadow-md bg-white border-2 border-red-700 rounded px-4 py-2 hover:bg-red-700 hover:text-white transition-all duration-100 flex gap-4 items-center`}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={disabled ? undefined : onClick}
+        className={`${className} shadow-md bg-white border-2 border-red-700 rounded px-4 py-2 transition-all duration-100 flex gap-4 items-center ${
+          disabled
+            ? "pointer-events-none cursor-not-allowed opacity-50"
+            : "hover:bg-red-700 hover:text-white"
+        }`}
       >
-        <button onClick={onClick}>{buttonName}</button>
-      </div>
+        {buttonName}
+      </button>
     );
   }
 
@@ -518,21 +580,20 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
             </div>
           </div>
           <div className={`flex gap-4`}>
-            <Table
-              columnArr={tableColumns}
-              dataArr={logsData}
-              editRow={
-                ["unvalidated", "received", "completed"].includes(
-                  orderTrackingStatus
-                )
-                  ? (row) => handleRowDetails(row)
-                  : null
-              }
-              className={`!h-[380px] !max-h-[380px] !w-[1000px]`}
-              sortField="id"
-              sortDirection="asc"
-              allowSort={false}
-            ></Table>
+            <div
+              className={`transition-all duration-150 ${
+                isOrderTableEditable ? "" : "opacity-60 grayscale"
+              }`}
+            >
+              <Table
+                columnArr={tableColumns}
+                dataArr={logsData}
+                editRow={isOrderTableEditable ? handleRowDetails : null}
+                className={`!h-[380px] !max-h-[380px] !w-[1000px]`}
+                sortField="id"
+                sortDirection="asc"
+              ></Table>
+            </div>
             <div className="flex gap-2"></div>
             <div className="flex flex-col gap-4 min-w-[400px]">
               <h1 className="text-2xl font-bold">Order Summary</h1>
@@ -671,6 +732,7 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
                     className={`text-green-800 border-green-800 hover:bg-green-800`}
                     onClick={() => onClickUpdateStatus("validated")}
                     buttonName={"Validate Order"}
+                    disabled={isEditingOrder}
                   ></OrderModalButton>
                 )}
               {orderTrackingStatus === "validated" && (
@@ -758,6 +820,7 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
                   className={`text-red-600`}
                   onClick={() => onClickUpdateStatus("cancelled")}
                   buttonName={"Cancel Order"}
+                  disabled={isEditingOrder}
                 ></OrderModalButton>
               )}
 
@@ -770,11 +833,24 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
               )}
 
               {orderTrackingStatus === "unvalidated" && (
-                <OrderModalButton
-                  className={`text-red-600`}
-                  onClick={() => updateOrderDetail(returnItems)}
-                  buttonName={"Edit Order"}
-                ></OrderModalButton>
+                <>
+                  <OrderModalButton
+                    className={`${
+                      isEditingOrder
+                        ? "text-green-800 border-green-800 hover:bg-green-800"
+                        : "text-blue-800 border-blue-800 hover:bg-blue-800"
+                    }`}
+                    onClick={isEditingOrder ? saveOrderEdits : startEditOrder}
+                    buttonName={isEditingOrder ? "Save Order" : "Edit Order"}
+                  ></OrderModalButton>
+                  {isEditingOrder && (
+                    <OrderModalButton
+                      className={`text-gray-700 border-gray-600 hover:bg-gray-200`}
+                      onClick={cancelEditOrder}
+                      buttonName={"Cancel Edit"}
+                    ></OrderModalButton>
+                  )}
+                </>
               )}
             </div>
           </div>
