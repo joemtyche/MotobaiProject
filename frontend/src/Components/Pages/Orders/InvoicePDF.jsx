@@ -42,11 +42,7 @@ const InvoicePDF = ({
   orderPayment,
   orderTrackingStatus,
   orderPaymentRefNum,
-  dateCreated,
-  dateValidated,
-  dateShipped,
-  dateReceived,
-  dateCompleted,
+  statusHistoryItems,
 }) => (
   <Document>
     <Page style={styles.page}>
@@ -93,11 +89,11 @@ const InvoicePDF = ({
         {/* Status History Section */}
         <View style={styles.section}>
           <Text style={styles.heading}>Status History</Text>
-          <Text>Date Created: {dateCreated}</Text>
-          <Text>Date Validated: {dateValidated}</Text>
-          <Text>Date Shipped: {dateShipped}</Text>
-          <Text>Date Received: {dateReceived}</Text>
-          <Text>Date Completed: {dateCompleted}</Text>
+          {(statusHistoryItems || []).map((statusItem) => (
+            <Text key={statusItem.statusKey}>
+              {statusItem.statusName}: {statusItem.displayText}
+            </Text>
+          ))}
         </View>
       </View>
 

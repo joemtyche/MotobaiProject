@@ -10,11 +10,7 @@ const InvoicePDFButton = ({
   orderPayment,
   orderTrackingStatus,
   orderPaymentRefNum,
-  dateCreated,
-  dateValidated,
-  dateShipped,
-  dateReceived,
-  dateCompleted,
+  statusHistoryItems,
 }) => {
   const generatePdfDocument = async () => {
     const blob = await pdf(
@@ -26,11 +22,7 @@ const InvoicePDFButton = ({
         orderPayment={orderPayment}
         orderTrackingStatus={orderTrackingStatus}
         orderPaymentRefNum={orderPaymentRefNum}
-        dateCreated={dateCreated}
-        dateValidated={dateValidated}
-        dateShipped={dateShipped}
-        dateReceived={dateReceived}
-        dateCompleted={dateCompleted}
+        statusHistoryItems={statusHistoryItems}
       />
     ).toBlob();
     const link = document.createElement("a");

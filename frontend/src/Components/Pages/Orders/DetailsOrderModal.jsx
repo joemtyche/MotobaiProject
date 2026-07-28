@@ -345,6 +345,15 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
   };
 
   const startEditOrder = () => {
+    if (orderTrackingStatus !== "unvalidated") {
+      showValidationError(
+        orderTrackingStatus === "shipped"
+          ? "Shipped orders cannot be edited."
+          : "Only unvalidated orders can be edited."
+      );
+      return;
+    }
+
     setPendingOrderEdits([]);
     setOrderDetailItems(null);
     setIsEditingOrder(true);
@@ -448,27 +457,160 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
   const orderInitialBalance = orderDetails?.payment?.initial_balance;
   const orderType = orderDetails?.order_type;
   const orderPaymentRefNum = orderDetails?.order_tracking?.reference_number;
-  const isOrderTableEditable =
-    orderTrackingStatus === "unvalidated" && isEditingOrder;
+  const isOrderEditable = orderTrackingStatus === "unvalidated";
+  const isOrderTableEditable = isOrderEditable && isEditingOrder;
 
-  const dateCreated = pdfDateSet("date_created");
-  const dateValidated = pdfDateSet("date_validated");
-  const dateShipped = pdfDateSet("date_shipped");
-  const dateReceived = pdfDateSet("date_received");
-  const dateCompleted = pdfDateSet("date_completed");
+  const statusConfig = {
+    created: {
+      statusName: "Created",
+      statusDateName: "date_created",
+      completeTextClass: "text-red-200",
+      pendingTextClass: "text-red-500",
+      colorClass: "!bg-red-600 text-white",
+    },
+    validated: {
+      statusName: "Validated",
+      statusDateName: "date_validated",
+      completeTextClass: "text-green-200",
+      pendingTextClass: "text-green-500",
+      colorClass: "!bg-green-600 text-white",
+    },
+    shipped: {
+      statusName: "Shipped",
+      statusDateName: "date_shipped",
+      completeTextClass: "text-blue-200",
+      pendingTextClass: "text-blue-500",
+      colorClass: "!bg-blue-600 text-white",
+    },
+    received: {
+      statusName: "Received",
+      statusDateName: "date_received",
+      completeTextClass: "text-yellow-200",
+      pendingTextClass: "text-yellow-500",
+      colorClass: "!bg-yellow-600 text-white",
+    },
+    completed: {
+      statusName: "Completed",
+      statusDateName: "date_completed",
+      completeTextClass: "text-green-200",
+      pendingTextClass: "text-green-500",
+      colorClass: "!bg-green-800 text-white",
+    },
+    cancelled: {
+      statusName: "Cancelled",
+      statusDateName: "date_cancelled",
+      completeTextClass: "text-red-200",
+      pendingTextClass: "text-red-500",
+      colorClass: "!bg-red-700 text-white",
+    },
+    returned: {
+      statusName: "Returned",
+      statusDateName: "date_returned",
+      completeTextClass: "text-orange-100",
+      pendingTextClass: "text-orange-500",
+      colorClass: "!bg-orange-600 text-white",
+    },
+  };
 
-  function pdfDateSet(statusDateName) {
-    const createdAtDate = new Date(
-      orderDetails?.order_tracking?.[statusDateName]
-    );
-    const options = { hour: "numeric", minute: "numeric", hour12: true }; // Options for formatting time
-    const formattedTime = createdAtDate.toLocaleString("en-US", options); // Format the time
-    const formattedDate = `${
-      createdAtDate.getMonth() + 1
-    }/${createdAtDate.getDate()}/${createdAtDate.getFullYear()} - ${formattedTime}`;
+  function formatTrackingDate(dateValue) {
+    if (!dateValue) {
+      return "";
+    }
 
-    return formattedDate;
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+
+    const formattedTime = date.toLocaleString("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    });
+
+    return `${
+      date.getMonth() + 1
+    }/${date.getDate()}/${date.getFullYear()} - ${formattedTime}`;
   }
+
+  function getStatusHistoryItem(statusKey) {
+    const config = statusConfig[statusKey];
+    const dateValue = orderDetails?.order_tracking?.[config.statusDateName];
+    const dateText = formatTrackingDate(dateValue);
+    const isComplete = Boolean(dateText);
+
+    return {
+      ...config,
+      statusKey,
+      dateText,
+      displayText: dateText || "Not complete",
+      className: isComplete
+        ? config.completeTextClass
+        : config.pendingTextClass,
+      colorState: isComplete ? config.colorClass : "",
+    };
+  }
+
+  function getStatusHistoryItems() {
+    const tracking = orderDetails?.order_tracking || {};
+    const createdItem = getStatusHistoryItem("created");
+
+    if (orderType === "Walkin") {
+      if (orderTrackingStatus === "cancelled") {
+        return [createdItem, getStatusHistoryItem("cancelled")];
+      }
+
+      return [createdItem, getStatusHistoryItem("completed")];
+    }
+
+    if (orderType === "Delivery") {
+      if (orderTrackingStatus === "cancelled") {
+        const completedStepsBeforeCancel = ["validated", "shipped", "received"]
+          .filter((statusKey) => tracking[statusConfig[statusKey].statusDateName])
+          .map(getStatusHistoryItem);
+
+        return [
+          createdItem,
+          ...completedStepsBeforeCancel,
+          getStatusHistoryItem("cancelled"),
+        ];
+      }
+
+      const deliverySteps = [
+        createdItem,
+        getStatusHistoryItem("validated"),
+        getStatusHistoryItem("shipped"),
+        getStatusHistoryItem("received"),
+      ];
+
+      if (orderTrackingStatus === "returned") {
+        return [...deliverySteps, getStatusHistoryItem("returned")];
+      }
+
+      return [...deliverySteps, getStatusHistoryItem("completed")];
+    }
+
+    return [createdItem];
+  }
+
+  const statusHistoryItems = getStatusHistoryItems();
+  const payBeforeDate = (() => {
+    const receivedDateValue = orderDetails?.order_tracking?.date_received;
+
+    if (!receivedDateValue) {
+      return "";
+    }
+
+    const payDate = new Date(receivedDateValue);
+
+    if (Number.isNaN(payDate.getTime())) {
+      return "";
+    }
+
+    payDate.setDate(payDate.getDate() + 30);
+    return formatTrackingDate(payDate);
+  })();
 
   //PDF things
 
@@ -490,69 +632,20 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
     );
   }
 
-  const [payBeforeDate, setPayBeforeDate] = useState("");
-
   function StatusDates({
     statusName,
-    statusDateName,
     className,
-    stateCheck,
     colorState,
+    displayText,
   }) {
-    const checkDate = orderDetails?.order_tracking?.[statusDateName];
-
-    const createdAtDate = new Date(
-      orderDetails?.order_tracking?.[statusDateName]
-    );
-
-    if (statusDateName === "date_received") {
-      // Add 30 days to the date
-      createdAtDate.setDate(createdAtDate.getDate() + 30);
-      const options = { hour: "numeric", minute: "numeric", hour12: true }; // Options for formatting time
-      const formattedTime = createdAtDate.toLocaleString("en-US", options); // Format the time
-
-      // Format the updated date
-      const formattedPayDate = `${
-        createdAtDate.getMonth() + 1
-      }/${createdAtDate.getDate()}/${createdAtDate.getFullYear()} - ${formattedTime}`;
-
-      // Update the state with the formatted date
-      setPayBeforeDate(formattedPayDate);
-    }
-
-    const options = { hour: "numeric", minute: "numeric", hour12: true }; // Options for formatting time
-    const formattedTime = createdAtDate.toLocaleString("en-US", options); // Format the time
-    const formattedDate = `${
-      createdAtDate.getMonth() + 1
-    }/${createdAtDate.getDate()}/${createdAtDate.getFullYear()} - ${formattedTime}`;
-
-    const colorMap = {
-      created: "!bg-red-600 text-white",
-      validated: "!bg-green-600 text-white",
-      shipped: "!bg-blue-600 text-white",
-      received: "!bg-yellow-600 text-white",
-      completed: "!bg-green-800 text-white",
-      cancelled: "!bg-red-700 text-white",
-      returned: "!bg-orange-600 text-white",
-    };
-
-    const statusColorClass = colorMap[colorState];
-
     return (
       <div
-        className={`bg-white py-2 px-4 rounded-md hover:-translate-y-1 hover:bg-gray-200 shadow-md transition-all duration-150 cursor-default ${statusColorClass}`}
+        className={`bg-white py-2 px-4 rounded-md hover:-translate-y-1 hover:bg-gray-200 shadow-md transition-all duration-150 cursor-default ${colorState}`}
       >
         <p className={`font-semibold ${className}`}>{`${statusName}`}</p>{" "}
-        <span className="text-lg font-bold">{`${
-          checkDate ? formattedDate : `Not yet ${stateCheck}`
-        }`}</span>
+        <span className="text-lg font-bold">{displayText}</span>
       </div>
     );
-  }
-
-  function dateStateChecker(state) {
-    const orderState = orderDetails?.order_tracking?.[state];
-    return orderState;
   }
 
   const [referenceNumber, setReferenceNumber] = useState("");
@@ -632,11 +725,7 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
                   orderPayment={orderPayment}
                   orderTrackingStatus={orderTrackingStatus}
                   orderPaymentRefNum={orderPaymentRefNum}
-                  dateCreated={dateCreated}
-                  dateValidated={dateValidated}
-                  dateShipped={dateShipped}
-                  dateReceived={dateReceived}
-                  dateCompleted={dateCompleted}
+                  statusHistoryItems={statusHistoryItems}
                 />
               </h1>
             </div>
@@ -659,19 +748,6 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
             <div className="flex gap-2"></div>
             <div className="flex flex-col gap-4 min-w-[400px]">
               <h1 className="text-2xl font-bold">Order Summary</h1>
-              <StatusDates
-                statusName={`Created`}
-                statusDateName={"date_created"}
-                className={`${
-                  dateStateChecker("date_created")
-                    ? "text-red-200"
-                    : "text-red-500"
-                }`}
-                stateCheck={`Created`}
-                colorState={`${
-                  dateStateChecker("date_created") ? "created" : ""
-                }`}
-              />
               <p className="hover:-translate-y-1 transition-all duration-100 text-lg font-semibold p-3 shadow-md rounded-md">
                 Sales Reference #: {orderDetails.reference_number}
               </p>
@@ -695,70 +771,16 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold">Status History</h1>
-              <div className="flex mt-4 gap-6">
-                {orderType === "Delivery" &&
-                  orderTrackingStatus !== "cancelled" && (
-                    <>
-                      <StatusDates
-                        statusName={`Validated`}
-                        statusDateName={"date_validated"}
-                        className={`${
-                          dateStateChecker("date_validated")
-                            ? "text-green-200"
-                            : "text-green-500"
-                        }`}
-                        stateCheck={`Validated`}
-                        colorState={`${
-                          dateStateChecker("date_validated") ? "validated" : ""
-                        }`}
-                      />
-                      <StatusDates
-                        statusName={`Shipped`}
-                        statusDateName={"date_shipped"}
-                        className={`${
-                          dateStateChecker("date_shipped")
-                            ? "text-blue-200"
-                            : "text-blue-500"
-                        }`}
-                        stateCheck={`Shipped`}
-                        colorState={`${
-                          dateStateChecker("date_shipped") ? "shipped" : ""
-                        }`}
-                      />
-                      <StatusDates
-                        statusName={`Received`}
-                        statusDateName={"date_received"}
-                        className={`${
-                          dateStateChecker("date_received")
-                            ? "text-yellow-200"
-                            : "text-yellow-500"
-                        }`}
-                        stateCheck={`Received`}
-                        colorState={`${
-                          dateStateChecker("date_received") ? "received" : ""
-                        }`}
-                      />
-                    </>
-                  )}
-
-                {orderTrackingStatus !== "cancelled" &&
-                  orderTrackingStatus !== "returned" && (
-                  <>
-                    <StatusDates
-                      statusName={`Completed`}
-                      statusDateName={"date_completed"}
-                      className={`${
-                        dateStateChecker("date_completed")
-                          ? "text-green-200"
-                          : "text-green-500"
-                      }`}
-                      stateCheck={`Completed`}
-                      colorState={`${
-                        dateStateChecker("date_completed") ? "completed" : ""
-                      }`}
-                    />
-                  </>
-                )}
+              <div className="flex mt-4 gap-6 flex-wrap">
+                {statusHistoryItems.map((statusItem) => (
+                  <StatusDates
+                    key={statusItem.statusKey}
+                    statusName={statusItem.statusName}
+                    className={statusItem.className}
+                    colorState={statusItem.colorState}
+                    displayText={statusItem.displayText}
+                  />
+                ))}
 
                 {orderTrackingStatus === "completed" && (
                   <div
@@ -771,37 +793,6 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
                   </div>
                 )}
 
-                {orderTrackingStatus === "cancelled" && (
-                  <StatusDates
-                    statusName={`Cancelled`}
-                    statusDateName={"date_cancelled"}
-                    className={`${
-                      dateStateChecker("date_cancelled")
-                        ? "text-red-200"
-                        : "text-red-500"
-                    }`}
-                    stateCheck={`Cancelled`}
-                    colorState={`${
-                      dateStateChecker("date_cancelled") ? "cancelled" : ""
-                    }`}
-                  />
-                )}
-
-                {orderTrackingStatus === "returned" && (
-                  <StatusDates
-                    statusName={`Returned`}
-                    statusDateName={"date_returned"}
-                    className={`${
-                      dateStateChecker("date_returned")
-                        ? "text-orange-100"
-                        : "text-orange-500"
-                    }`}
-                    stateCheck={`Returned`}
-                    colorState={`${
-                      dateStateChecker("date_returned") ? "returned" : ""
-                    }`}
-                  />
-                )}
               </div>
             </div>
             <div className="flex gap-4 max-h-[50px] ">
