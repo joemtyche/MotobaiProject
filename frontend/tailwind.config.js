@@ -12,8 +12,8 @@ export default {
       },
 
       boxShadow: {
-        shadow: "rgba(0, 0, 0, 0.3) 0px 3px 8px;",
-        shadowTable: "rgba(0, 0, 0, 0.05) 0px 3px 8px;",
+        shadow: "rgba(0, 0, 0, 0.3) 0px 3px 8px",
+        shadowTable: "rgba(0, 0, 0, 0.05) 0px 3px 8px",
       },
 
       backgroundColor: {
