@@ -257,8 +257,8 @@ mysql -u root -p motobai -e "SELECT COUNT(*) AS products FROM api_product; SELEC
 Seed login:
 
 ```text
-username: 123
-password: 123
+username: motobai_admin
+password: motobai123
 ```
 
 ---

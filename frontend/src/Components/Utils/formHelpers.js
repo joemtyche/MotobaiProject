@@ -37,6 +37,23 @@ export const getNextOrderReferenceNumber = (
   )}`;
 };
 
+export const formatPeso = (value, fallback = "N/A") => {
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
+
+  const numberValue = Number(value);
+
+  if (Number.isNaN(numberValue)) {
+    return fallback;
+  }
+
+  return `₱${numberValue.toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
 export const getApiErrorText = (
   error,
   fallback = "An unexpected error occurred. Please try again."

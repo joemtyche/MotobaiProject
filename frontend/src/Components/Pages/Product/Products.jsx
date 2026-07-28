@@ -14,6 +14,7 @@ import { useFetchData } from "../../Hooks/useFetchData.js";
 import { useDeleteData } from "../../Hooks/useDeleteData.js";
 import { useCreateData } from "../../Hooks/useCreateData.js";
 import { useUpdateData } from "../../Hooks/useUpdateData.js";
+import { formatPeso } from "../../Utils/formHelpers.js";
 
 export default function Products() {
   const [method, setMethod] = useState("");
@@ -38,8 +39,12 @@ export default function Products() {
       name: "product.product_name",
     },
     {
-      label: "Price",
+      label: "Price (₱)",
       name: "product.price",
+      type: "number",
+      inputMode: "decimal",
+      min: "1",
+      step: "0.01",
     },
     {
       label: "Product Type",
@@ -61,6 +66,10 @@ export default function Products() {
     {
       label: "Stock Minimum Threshold",
       name: "stock_minimum_threshold",
+      type: "number",
+      inputMode: "numeric",
+      min: "1",
+      step: "1",
     },
     {
       label: "SKU",
@@ -93,6 +102,9 @@ export default function Products() {
     {
       header: "Price",
       row: "product.price",
+      customRender: (item) => {
+        return <p>{formatPeso(item.product.price)}</p>;
+      },
     },
     {
       header: "Product Type",
@@ -107,10 +119,12 @@ export default function Products() {
       row: "product.brand",
     },
     {
-      header: "Minimum Treshold",
+      header: "Minimum Threshold",
       row: "stock_minimum_threshold",
       customRender: (item) => {
-        return <p className="font-semibold">{item.stock_minimum_threshold}</p>;
+        return (
+          <p className="font-semibold">{item.stock_minimum_threshold} units</p>
+        );
       },
     },
   ];

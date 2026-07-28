@@ -14,6 +14,7 @@ import DynamicModal from "../../DynamicComponents/DynamicModal.jsx";
 import { useFetchData } from "../../Hooks/useFetchData.js";
 import StockOutForm from "./StockOutForm.jsx";
 import PageActionButton from "../../DynamicComponents/PageActionButton.jsx";
+import { formatPeso } from "../../Utils/formHelpers.js";
 
 export default function Inventory() {
   const [stockInModal, setStockInModal] = useState(false);
@@ -87,6 +88,9 @@ export default function Inventory() {
     {
       header: "Price",
       row: "product.price",
+      customRender: (item) => {
+        return <p>{formatPeso(item.product.price)}</p>;
+      },
     },
 
     {

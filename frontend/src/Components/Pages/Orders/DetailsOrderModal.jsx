@@ -4,7 +4,7 @@ import Table from "../../DynamicComponents/DynamicTable";
 import api from "../../../api";
 import Swal from "sweetalert2";
 import InvoicePDFButton from "./InvoicePDFButton";
-import { getApiErrorText } from "../../Utils/formHelpers.js";
+import { formatPeso, getApiErrorText } from "../../Utils/formHelpers.js";
 
 const DetailsOrderModal = ({ logsData, orderId }) => {
   const [orderDetails, setOrderDetails] = useState({});
@@ -429,13 +429,13 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
       header: "Item Price",
       row: "product_price",
       customRender: (item) => {
-        return <p>{item.product_price}</p>;
+        return <p>{formatPeso(item.product_price)}</p>;
       },
     },
     {
       header: "Total Price",
       customRender: (item) => {
-        return <p>{item.quantity * item.product_price}</p>;
+        return <p>{formatPeso(item.quantity * item.product_price)}</p>;
       },
       row: "totalPrice",
     },
@@ -676,13 +676,13 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
                 Sales Reference #: {orderDetails.reference_number}
               </p>
               <p className="hover:-translate-y-1 transition-all duration-100 text-lg font-semibold p-3 shadow-md rounded-md">
-                Initial Balance: {orderInitialBalance}
+                Initial Balance: {formatPeso(orderInitialBalance)}
               </p>
               <p className="hover:-translate-y-1 transition-all duration-100 text-lg font-semibold p-3 shadow-md rounded-md">
-                Deductions: {orderDeductions}
+                Deductions: {formatPeso(orderDeductions)}
               </p>
               <p className="hover:-translate-y-1 transition-all duration-100 text-lg font-semibold p-3 shadow-md rounded-md">
-                Total Balance: {orderPayment}
+                Total Balance: {formatPeso(orderPayment)}
               </p>
               {orderTrackingStatus === "received" && (
                 <p className="bg-red-800 hover:-translate-y-1 transition-all duration-100 text-lg font-semibold p-3 shadow-md rounded-md">

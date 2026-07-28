@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { formatPeso } from "../../Utils/formHelpers";
 
 // Define styles for the PDF
 const styles = StyleSheet.create({
@@ -82,9 +83,9 @@ const InvoicePDF = ({
           <Text>
             Sales Reference #: {orderDetails.reference_number || "N/A"}
           </Text>
-          <Text>Initial Balance: {orderInitialBalance || "N/A"}</Text>
-          <Text>Deductions: {orderDeductions || "N/A"}</Text>
-          <Text>Total Balance: {orderPayment || "N/A"}</Text>
+          <Text>Initial Balance: {formatPeso(orderInitialBalance)}</Text>
+          <Text>Deductions: {formatPeso(orderDeductions)}</Text>
+          <Text>Total Balance: {formatPeso(orderPayment)}</Text>
           {orderTrackingStatus === "completed" && (
             <Text>Payment Reference #: {orderPaymentRefNum || "N/A"}</Text>
           )}
@@ -108,8 +109,8 @@ const InvoicePDF = ({
             <Text key={index} style={styles.logItem}>
               SKU: {log.sku_hold}, Product Name:{" "}
               {log.product_name || "No description available"}, Quantity:{" "}
-              {log.quantity} X {log.product_price}, Total Price:{" "}
-              {log.quantity * log.product_price}
+              {log.quantity} X {formatPeso(log.product_price)}, Total Price:{" "}
+              {formatPeso(log.quantity * log.product_price)}
             </Text>
           ))}
         </View>

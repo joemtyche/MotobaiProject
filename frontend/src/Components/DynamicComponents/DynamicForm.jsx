@@ -55,6 +55,11 @@ export default function DynamicForm({
     onSubmit(form, () => setForm(initialForm));
   };
 
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    onsubmitHandler();
+  };
+
   return (
     <section>
       <div>
@@ -70,7 +75,7 @@ export default function DynamicForm({
                 alt="Motobai-Logo"
               />
             </div>
-            <form onSubmit={onSubmit} className={`min-w-[55vw]`}>
+            <form onSubmit={handleSubmit} className={`min-w-[55vw]`}>
               <div className={`bg-gray-100 py-10 px-8 rounded-b-lg`}>
                 <h1 className="font-bold text-2xl mb-10">{title}</h1>
                 <div className={`   gap-x-6 gap-y-8 grid grid-cols-3 `}>
@@ -85,6 +90,9 @@ export default function DynamicForm({
                         maxLength,
                         pattern,
                         minLength,
+                        min,
+                        max,
+                        step,
                       },
                       index
                     ) => (
@@ -104,6 +112,9 @@ export default function DynamicForm({
                           maxLength={maxLength}
                           pattern={pattern}
                           minLength={minLength}
+                          min={min}
+                          max={max}
+                          step={step}
                           value={
                             form[name] ||
                             (name.includes(".")
@@ -137,10 +148,6 @@ export default function DynamicForm({
                     {trashIcon}
                   </button>
                   <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onsubmitHandler();
-                    }}
                     type="submit"
                     className={`shadow-md bg-white border-2 border-red-700 rounded px-4 py-2 hover:bg-red-700 hover:text-white transition-all duration-100 flex gap-4 items-center`}
                   >

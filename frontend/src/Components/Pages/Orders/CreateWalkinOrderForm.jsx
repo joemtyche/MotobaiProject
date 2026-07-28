@@ -13,6 +13,7 @@ import {
   getApiErrorText,
   getAvailableInventoryOptions,
   getNextOrderReferenceNumber,
+  formatPeso,
 } from "../../Utils/formHelpers.js";
 
 import { useFetchData } from "../../Hooks/useFetchData.js";
@@ -145,11 +146,14 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
     {
       header: "Unit Price",
       row: "product_price",
+      customRender: (item) => {
+        return <p>{formatPeso(item.product_price)}</p>;
+      },
     },
     {
       header: "Total Price",
       customRender: (item) => {
-        return <p>{(item.quantity * item.product_price).toFixed(2)}</p>;
+        return <p>{formatPeso(item.quantity * item.product_price)}</p>;
       },
     },
   ];
@@ -629,7 +633,10 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
                   <div className="flex">
                     <input
                       className={`text-center text-lg border-2 rounded py-2 px-4 focus:border-green-600 focus:ring-0 focus:outline-none shadow-sm`}
-                      type="text"
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      step="0.01"
                       value={deduction}
                       onChange={(e) => setDeduction(e.target.value)}
                       required
@@ -641,7 +648,7 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
                       htmlFor={"deduction"}
                       className={`text-base absolute transition-all duration-100 ease-in px-4 py-2 text-gray-600 label-line`}
                     >
-                      Deduction
+                      Deduction (₱)
                     </label>
                   </div>
 
@@ -649,17 +656,17 @@ const CreateWalkinOrderForm = ({ confirmHandler }) => {
                     <p className="text-sm text-gray-600">
                       Subtotal:{" "}
                       <span className="font-semibold">
-                        {subtotalPrice.toFixed(2)}
+                        {formatPeso(subtotalPrice)}
                       </span>
                     </p>
                     {deductionAmount > 0 && (
                       <p className="text-sm font-semibold text-red-700">
-                        Deduction: -{deductionAmount.toFixed(2)}
+                        Deduction: -{formatPeso(deductionAmount)}
                       </p>
                     )}
                     <span className=" text-xl">{`TOTAL PRICE: `}</span>
                     <span className="text-2xl font-bold">
-                      {totalPrice.toFixed(2)}
+                      {formatPeso(totalPrice)}
                     </span>
                   </div>
                 </div>
