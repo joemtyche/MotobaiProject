@@ -1,7 +1,7 @@
 import api from "../../api";
 import Swal from "sweetalert2";
 
-export function useDeleteData(info, dataID) {
+export function useDeleteData() {
   const deleteData = async (info, dataID) => {
     Swal.fire({
       title: "Are you sure?",
@@ -17,7 +17,7 @@ export function useDeleteData(info, dataID) {
           const url = `/api/${info}/soft_delete/${dataID}`;
           const formattedUrl = url.endsWith("/") ? url : `${url}/`;
 
-          const res = await api.put(formattedUrl, {
+          await api.put(formattedUrl, {
             is_deleted: "True",
           });
           Swal.fire({
@@ -26,7 +26,7 @@ export function useDeleteData(info, dataID) {
               info.charAt(0).toUpperCase() + info.slice(1)
             } has been deleted.`,
             icon: "success",
-          }).then((result) => {
+          }).then(() => {
             window.location.reload();
           });
         } catch (error) {

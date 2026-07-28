@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { UserPlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import Table from "../../DynamicComponents/DynamicTable.jsx";
 import Overview from "../../Overview.jsx";
@@ -48,8 +48,7 @@ export default function Accounts() {
   }, [errorWindow]);
 
   // ERROR TEXT
-  const [errors, setErrors] = useState("");
-  var errorFields = [];
+  const [errors] = useState("");
 
   // SUCCESS WINDOW TOGGLE
   const [successWindow, setSuccessWindow] = useState(false);
@@ -67,7 +66,7 @@ export default function Accounts() {
     }
   }, [successWindow]);
 
-  const [successMethod, setSuccessMethod] = useState("");
+  const [successMethod] = useState("");
 
   //PROPS FOR <INPUT>
   const formArr = [
@@ -156,7 +155,7 @@ export default function Accounts() {
 
   // fetch and delete accounts
   const { data: account, triggerRefresh } = useFetchData("account");
-  const { deleteData, error } = useDeleteData(); // add error field here later
+  const { deleteData } = useDeleteData();
 
   const deleteHandler = () => {
     deleteData("account", rowIdEdit);
@@ -165,8 +164,8 @@ export default function Accounts() {
   // DISPLAY TEMPLATE ON <OVERVIEW></OVERVIEW>
   const overviewArr = [{ title: "Accounts", quantity: `${account.length}` }];
 
-  const { createData, loading: createLoading } = useCreateData();
-  const { updateData, loading: updateLoading } = useUpdateData();
+  const { createData } = useCreateData();
+  const { updateData } = useUpdateData();
 
   const onSubmitHandler = async (form) => {
     if (method === "create") {

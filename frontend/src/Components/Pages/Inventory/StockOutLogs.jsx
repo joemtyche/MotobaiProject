@@ -74,14 +74,12 @@ export default function Inventory() {
 
   const [modal, setModal] = useState(false);
   const [method, setMethod] = useState("None");
-  const [detailsRow, setDetailsRow] = useState(null);
 
   const toggleModal = () => {
     setModal((m) => (m = !m));
 
     if (method == "Details") {
       setMethod("None");
-      setDetailsRow(null);
       setReason("");
     }
   };
@@ -99,7 +97,6 @@ export default function Inventory() {
       ].join(" ");
       setEmployee(employeeFullName);
       setReason(getReasonText(selectedLog.reason));
-      setDetailsRow(id);
       setMethod("Details");
       toggleModal();
     } else {

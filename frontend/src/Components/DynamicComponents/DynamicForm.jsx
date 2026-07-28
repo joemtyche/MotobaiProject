@@ -1,8 +1,4 @@
-import React, { useEffect, useState } from "react";
-import {
-  UserPlusIcon,
-  ArrowsPointingOutIcon,
-} from "@heroicons/react/24/outline";
+import { useState } from "react";
 import Logo from "../../assets/Logo.png";
 import "../pages.css";
 

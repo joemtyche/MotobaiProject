@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
-  UserPlusIcon,
   ArrowDownTrayIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
@@ -50,7 +49,7 @@ const Employees = () => {
     }
   }, [errorWindow]);
 
-  const [errors, setErrors] = useState("");
+  const [errors] = useState("");
   var errorFields = [];
 
   // SUCCESS WINDOW TOGGLE
@@ -69,7 +68,7 @@ const Employees = () => {
     }
   }, [successWindow]);
 
-  const [successMethod, setSuccessMethod] = useState("");
+  const [successMethod] = useState("");
 
   //PROPS FOR <INPUT>
   const formArr = [
@@ -150,7 +149,7 @@ const Employees = () => {
   ];
 
   const { data: employee, triggerRefresh } = useFetchData("employee");
-  const { deleteData, error } = useDeleteData(); // add error field here later
+  const { deleteData } = useDeleteData();
 
   const deleteHandler = () => {
     deleteData("employee", rowIdEdit);
@@ -159,8 +158,8 @@ const Employees = () => {
   const overviewArr = [{ title: "Employees", quantity: `${employee.length}` }];
 
   /////////////////////////////////////////////////////////// BACKEND']
-  const { createData, loading: createLoading } = useCreateData();
-  const { updateData, loading: updateLoading } = useUpdateData();
+  const { createData } = useCreateData();
+  const { updateData } = useUpdateData();
 
   const onSubmitHandler = async (form) => {
     if (method === "create") {

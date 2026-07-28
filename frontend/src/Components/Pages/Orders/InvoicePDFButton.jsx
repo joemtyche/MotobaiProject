@@ -1,4 +1,3 @@
-import React from "react";
 import { pdf } from "@react-pdf/renderer";
 import InvoicePDF from "./InvoicePDF";
 

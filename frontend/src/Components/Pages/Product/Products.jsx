@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import {
-  ArchiveBoxArrowDownIcon,
   ArrowDownTrayIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
@@ -9,7 +8,6 @@ import Overview from "../../Overview.jsx";
 import DynamicForm from "../../DynamicComponents/DynamicForm.jsx";
 import DynamicModal from "../../DynamicComponents/DynamicModal.jsx";
 import PageActionButton from "../../DynamicComponents/PageActionButton.jsx";
-import api from "../../../api";
 import { useFetchData } from "../../Hooks/useFetchData.js";
 import { useDeleteData } from "../../Hooks/useDeleteData.js";
 import { useCreateData } from "../../Hooks/useCreateData.js";
@@ -130,7 +128,7 @@ export default function Products() {
   ];
 
   const { data: product, triggerRefresh } = useFetchData("inventory");
-  const { deleteData, error } = useDeleteData(); // add error field here later
+  const { deleteData } = useDeleteData();
 
   const deleteHandler = () => {
     deleteData("inventory", rowIdEdit);
@@ -139,8 +137,8 @@ export default function Products() {
   // DISPLAY TEMPLATE ON <OVERVIEW></OVERVIEW>
   const overviewArr = [{ title: "Products", quantity: `${product.length}` }];
 
-  const { createData, loading: createLoading } = useCreateData();
-  const { updateData, loading: updateLoading } = useUpdateData();
+  const { createData } = useCreateData();
+  const { updateData } = useUpdateData();
 
   const onSubmitHandler = async (form) => {
     const info = {

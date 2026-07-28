@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
-  UserPlusIcon,
   ArrowDownTrayIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
@@ -52,7 +51,7 @@ const Suppliers = () => {
   }, [errorWindow]);
 
   // ERROR TEXT
-  const [errors, setErrors] = useState("");
+  const [errors] = useState("");
   var errorFields = [];
 
   // SUCCESS WINDOW TOGGLE
@@ -71,7 +70,7 @@ const Suppliers = () => {
     }
   }, [successWindow]);
 
-  const [successMethod, setSuccessMethod] = useState("");
+  const [successMethod] = useState("");
   //PROPS FOR <INPUT>
   const formArr = [
     {
@@ -110,7 +109,7 @@ const Suppliers = () => {
   ];
 
   const { data: supplier, triggerRefresh } = useFetchData("supplier");
-  const { deleteData, error } = useDeleteData(); // add error field here later
+  const { deleteData } = useDeleteData();
 
   const deleteHandler = () => {
     deleteData("supplier", rowIdEdit);
@@ -121,8 +120,8 @@ const Suppliers = () => {
 
   /////////////////////////////////////////////////////////// BACKEND
 
-  const { createData, loading: createLoading } = useCreateData();
-  const { updateData, loading: updateLoading } = useUpdateData();
+  const { createData } = useCreateData();
+  const { updateData } = useUpdateData();
 
   const onSubmitHandler = async (form) => {
     if (method === "create") {

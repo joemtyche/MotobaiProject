@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   CheckCircleIcon,
   ClockIcon,
@@ -156,14 +156,12 @@ export default function Orders() {
 
   const [modal, setModal] = useState(false);
   const [method, setMethod] = useState("None");
-  const [detailsRow, setDetailsRow] = useState(null);
 
   const toggleModal = () => {
     setModal((m) => (m = !m));
 
     if (method == "Details") {
       setMethod("None");
-      setDetailsRow(null);
     }
   };
 
@@ -172,7 +170,6 @@ export default function Orders() {
     setOrderDetails(selectedItem.order_details); // Set the specific log's items
     setOrderId(selectedItem.id);
 
-    setDetailsRow(id);
     setMethod("Details");
 
     toggleModal();

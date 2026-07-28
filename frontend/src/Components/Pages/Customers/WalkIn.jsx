@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { UserPlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import Table from "../../DynamicComponents/DynamicTable.jsx";
 import Overview from "../../Overview.jsx";
@@ -46,7 +46,7 @@ const WalkIn = () => {
   //   }
   // }, [errorWindow]);
 
-  const [errors, setErrors] = useState("");
+  const [errors] = useState("");
   var errorFields = [];
 
   //PROPS FOR <INPUT>
@@ -85,7 +85,7 @@ const WalkIn = () => {
   ];
 
   const { data: customer, triggerRefresh } = useFetchData("customer");
-  const { deleteData, error } = useDeleteData(); // add error field here later
+  const { deleteData } = useDeleteData();
 
   const deleteHandler = () => {
     deleteData("customer", rowIdEdit);
@@ -95,10 +95,10 @@ const WalkIn = () => {
     { title: "Walk-in Customers", quantity: `${customer.length}` },
   ];
 
-  const { createData, loading: createLoading } = useCreateData();
-  const { updateData, loading: updateLoading } = useUpdateData();
+  const { createData } = useCreateData();
+  const { updateData } = useUpdateData();
 
-  const onSubmitHandler = async (form) => {
+  const onSubmitHandler = async (form, callback) => {
     if (method === "create") {
       if (rowToEdit === null) {
         await createData(
@@ -126,7 +126,7 @@ const WalkIn = () => {
       );
     }
     triggerRefresh();
-    callback && callback();
+    callback?.();
     setRowToEdit(null);
   };
 

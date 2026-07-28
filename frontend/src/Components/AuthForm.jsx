@@ -68,7 +68,7 @@ function Form({ route, method }) {
           title: "Logged in!",
           icon: "success",
           timer: 1000,
-        }).then((result) => {
+        }).then(() => {
           navigate("/accounts");
         });
       } else {
@@ -76,7 +76,7 @@ function Form({ route, method }) {
           title: "Account Created!",
           icon: "success",
           timer: 1000,
-        }).then((result) => {
+        }).then(() => {
           navigate("/login");
         });
 
@@ -129,7 +129,7 @@ function Form({ route, method }) {
               <div className="flex justify-center">
                 {method === "login" ? (
                   <p className="text-sm">
-                    Don't have an account?{" "}
+                    Don&apos;t have an account?{" "}
                     <span className="text-red-700 cursor-pointer hover:underline" onClick={() => navigate("/register")}>
                       Register
                     </span>

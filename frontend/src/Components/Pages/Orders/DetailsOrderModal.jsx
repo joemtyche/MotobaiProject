@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Logo from "../../../assets/Logo.png";
 import Table from "../../DynamicComponents/DynamicTable";
 import api from "../../../api";
@@ -11,6 +11,7 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
   const [orderDetailItems, setOrderDetailItems] = useState(null);
   const [isEditingOrder, setIsEditingOrder] = useState(false);
   const [pendingOrderEdits, setPendingOrderEdits] = useState([]);
+  const pendingOrderEditsRef = useRef(pendingOrderEdits);
 
   const showValidationError = (text) => {
     Swal.fire({
@@ -139,11 +140,15 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
   };
 
   useEffect(() => {
+    pendingOrderEditsRef.current = pendingOrderEdits;
+  }, [pendingOrderEdits]);
+
+  useEffect(() => {
     if (!orderDetailItems?.id || !isEditingOrder) {
       return;
     }
 
-    const existingEdit = pendingOrderEdits.find(
+    const existingEdit = pendingOrderEditsRef.current.find(
       (item) => item.order_detail_id === orderDetailItems.id
     );
     const currentQuantity =
