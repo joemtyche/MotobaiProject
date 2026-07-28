@@ -208,6 +208,7 @@ class OrderTracking(models.Model):
     date_received = models.DateTimeField(null=True, blank=True)
     date_completed = models.DateTimeField(null=True, blank=True)
     date_cancelled = models.DateTimeField(null=True, blank=True)
+    date_returned = models.DateTimeField(null=True, blank=True)
 
     last_updated = models.DateTimeField(auto_now=True)
 

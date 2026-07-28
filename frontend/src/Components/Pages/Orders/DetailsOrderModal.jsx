@@ -9,8 +9,6 @@ import { getApiErrorText } from "../../Utils/formHelpers.js";
 const DetailsOrderModal = ({ logsData, orderId }) => {
   const [orderDetails, setOrderDetails] = useState({});
   const [orderDetailItems, setOrderDetailItems] = useState(null);
-  const [returnItems, setReturnItems] = useState([]);
-  const [selectedRows, setSelectedRows] = useState([]);
   const [isEditingOrder, setIsEditingOrder] = useState(false);
   const [pendingOrderEdits, setPendingOrderEdits] = useState([]);
 
@@ -268,6 +266,16 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
 
   const updateStatus = async (status) => {
     let date_field = "";
+    const orderTrackingId = orderDetails?.order_tracking?.id;
+
+    if (!orderTrackingId) {
+      Swal.fire({
+        title: "Error!",
+        text: "Order tracking data is not ready. Please reopen the order and try again.",
+        icon: "error",
+      });
+      return;
+    }
 
     let statusString = "";
     if (status === "validated") {
@@ -312,8 +320,8 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
       }
   
 
-      const res = await api.put(
-        `/api/ordertracking/update/${orderId}/`,
+      await api.put(
+        `/api/ordertracking/update/${orderTrackingId}/`,
         payload
       );
 
@@ -733,7 +741,8 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
                     </>
                   )}
 
-                {orderTrackingStatus !== "cancelled" && (
+                {orderTrackingStatus !== "cancelled" &&
+                  orderTrackingStatus !== "returned" && (
                   <>
                     <StatusDates
                       statusName={`Completed`}
@@ -774,6 +783,22 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
                     stateCheck={`Cancelled`}
                     colorState={`${
                       dateStateChecker("date_cancelled") ? "cancelled" : ""
+                    }`}
+                  />
+                )}
+
+                {orderTrackingStatus === "returned" && (
+                  <StatusDates
+                    statusName={`Returned`}
+                    statusDateName={"date_returned"}
+                    className={`${
+                      dateStateChecker("date_returned")
+                        ? "text-orange-100"
+                        : "text-orange-500"
+                    }`}
+                    stateCheck={`Returned`}
+                    colorState={`${
+                      dateStateChecker("date_returned") ? "returned" : ""
                     }`}
                   />
                 )}
@@ -834,8 +859,9 @@ const DetailsOrderModal = ({ logsData, orderId }) => {
                       ></OrderModalButton>
                       <OrderModalButton
                         className={`text-orange-500 border-orange-500`}
-                        onClick={() => updateOrderDetail(returnItems)}
+                        onClick={() => onClickUpdateStatus("returned")}
                         buttonName={"Return Order"}
+                        disabled={isEditingOrder}
                       ></OrderModalButton>
                     </div>
                   </div>

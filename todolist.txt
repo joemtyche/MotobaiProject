@@ -1,16 +1,14 @@
 ACTIVE TODO / IMPORTANT RISKS
 
 ORDER + STOCK INTEGRITY
-- Fix OrderTracking stock mutation logic before relying on demo data.
-  - Stock validation exists in both OrderTracking.save() and a pre_save signal.
-  - Stock is mutated in post_save based only on current status, so repeated saves can deduct or return stock again.
-  - Cancelling an unvalidated order can add stock back even though stock was never deducted.
-  - Editing order details calls order.order_tracking.save(), which can accidentally trigger stock logic.
-- Confirm the correct stock behavior for every transition:
+- Manually confirm the patched stock transition behavior:
   - Delivery: unvalidated -> validated should deduct stock once.
   - Delivery: validated -> shipped -> received -> completed should not deduct again.
   - Walk-in: unvalidated -> completed should deduct stock once.
   - Cancelled / returned should only return stock if stock was previously deducted.
+- Watch edited order details on unvalidated orders.
+  - Saving order-detail edits still calls order.order_tracking.save().
+  - Current stock transition logic should prevent extra stock mutation, but this should be manually verified.
 
 ORDER DETAILS / RETURN FLOW
 - Fix or temporarily remove Return Order in the order details modal.
@@ -37,6 +35,8 @@ FRONTEND FORM + TABLE CLEANUP
   - DynamicTable falls back to row index when an item has no backend id.
   - Sorting temporary rows by index can make row-click edits target the wrong item.
 - Replace page reloads after create/update/delete/status actions with refetch or local state updates.
+- Order Management and Order History now support combined status + order-type sidebar filters.
+- Order History now shows Sales Reference # and Bill Reference #.
 
 LINT / PRODUCTION CLEANUP
 - Fix the real lint/runtime issues first.
